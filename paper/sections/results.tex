@@ -106,49 +106,66 @@ codebook is shown separately.}
 \subsection{Qualitative reconstructions}
 
 Figure~\ref{fig:recon} shows eight random CIFAR-10 test images
-reconstructed by \ours{} at the final checkpoint. Per-image PSNR is
-annotated on each reconstruction; the $5\times$-amplified absolute
-error map in the bottom row reveals that the remaining error
-concentrates on high-frequency textures (fur, foliage, fine
-mechanical detail) while the low-frequency colour and shape
-structure is faithfully preserved. This pattern is consistent with
-the compression budget available at $8\times 8$ latent resolution
-with an $8$-dimensional codebook embedding.
+reconstructed by each of the three quantizers that produced a
+non-degenerate decoder (the Gumbel-Softmax VQ configuration at this
+learning rate never learns anything beyond colour statistics, so we
+omit it from the qualitative comparison). The VQ-STE baseline
+reproduces the low-frequency colour and shape structure faithfully
+and drops only the high-frequency texture. The collapsed
+\ours{}-full decoder produces visibly washed-out outputs with
+recognisable silhouettes but muted colour palettes, consistent with
+its $36\%$ codebook usage. FSQ produces the sharpest reconstructions
+and the highest PSNR, at the cost of an implicit codebook that is
+$60\times$ larger than the learned codebooks used by the other
+methods.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.98\linewidth]{figures/fig_recon_smoke_rotation.png}
-\caption{Reconstruction case study on CIFAR-10 test images with
-\ours{}. Top row: original. Middle row: reconstruction, with
-per-image PSNR reported above. Bottom row: absolute pixel error,
-amplified $5\times$ for visibility. Residual error concentrates on
-high-frequency texture; low-frequency colour and shape are well
-preserved.}
+\includegraphics[width=0.95\linewidth]{figures/fig_recon_vanilla_e1.png}\\[4pt]
+\includegraphics[width=0.95\linewidth]{figures/fig_recon_rotation_e1.png}\\[4pt]
+\includegraphics[width=0.95\linewidth]{figures/fig_recon_fsq_e1.png}
+\caption{Reconstruction case study on the same eight CIFAR-10 test
+images at the end of training. For each panel: top row original,
+middle row reconstruction (per-image PSNR above each), bottom row
+absolute pixel error amplified $5\times$. Top panel: VQ-VAE (STE);
+middle panel: \ours{} (full), exhibiting the collapsed colour
+palette predicted by the $36\%$ codebook utilisation; bottom panel:
+FSQ, visibly the sharpest.}
 \label{fig:recon}
 \end{figure}
 
 \subsection{Ablation: rotation versus rescaling (RQ4)}
 
 Table~\ref{tab:ablation_modes} isolates the contribution of each
-component of the \ours{} estimator. Removing the rotation
-($\rmat = \mathbf{I}$) or the rescaling ($s = 1$) each causes a drop
-relative to the full estimator; removing both recovers the VQ-STE
-baseline.
+component of the \ours{} estimator. The decomposition is decisive.
+Configurations that back-propagate the Householder reflection $\rmat$
+(rows "Rotation only" and "Full") both collapse the codebook and
+lose more than $3$\,dB of reconstruction PSNR relative to the STE
+baseline. Configurations that back-propagate only the scalar rescale
+$s$ and treat $\rmat$ as the identity in the backward pass (rows
+"STE" and "Rescale only") behave nearly identically to the VQ-STE
+baseline. The rotation matrix itself, despite being the geometrically
+correct backward signal, is the component that destabilises training.
 
 \begin{table}[t]
 \centering
 \small
 \caption{Ablation of the two components of the \ours{} estimator on
-CIFAR-10, holding all else fixed.}
+CIFAR-10, evaluated on the validation set after $2{,}000$ training
+steps at batch size $1024$. The forward pass is bit-exactly identical
+across all four configurations; only the backward Jacobian differs.
+Runs that back-propagate the Householder reflection (Rotation only,
+Full) collapse; runs that back-propagate only the scalar rescale
+(STE, Rescale only) track the VQ-STE baseline.}
 \label{tab:ablation_modes}
 \begin{tabular}{lcccc}
 \toprule
 Gradient route & PSNR$\uparrow$ & SSIM$\uparrow$ & Usage$\uparrow$ & Perplexity$\uparrow$ \\
 \midrule
-STE ($s=1, \rmat=\mathbf{I}$)           & ?? & ?? & ?? & ?? \\
-Rescale only ($s$ kept, $\rmat=\mathbf{I}$) & ?? & ?? & ?? & ?? \\
-Rotation only ($\rmat$ kept, $s=1$)     & ?? & ?? & ?? & ?? \\
-Full ($s$ and $\rmat$ kept)             & \textbf{??} & \textbf{??} & \textbf{??} & \textbf{??} \\
+STE \hfill ($s=1$, $\rmat=\mathbf{I}$)           & \rotstePsnr    & \rotsteSsim    & \rotsteUsage    & \rotstePerplexity    \\
+Rescale only \hfill ($s$, $\rmat=\mathbf{I}$)     & \rotnorotPsnr  & \rotnorotSsim  & \rotnorotUsage  & \rotnorotPerplexity  \\
+Rotation only \hfill ($s=1$, $\rmat$)             & \rotnorescPsnr & \rotnorescSsim & \rotnorescUsage & \rotnorescPerplexity \\
+Full \hfill ($s$, $\rmat$)                        & \rotfullPsnr   & \rotfullSsim   & \rotfullUsage   & \rotfullPerplexity   \\
 \bottomrule
 \end{tabular}
 \end{table}

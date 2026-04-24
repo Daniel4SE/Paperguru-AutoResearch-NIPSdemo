@@ -105,23 +105,36 @@ quantizers = **≈ 2 hours** for the full E1 matrix.
 Main CIFAR-10 reconstruction benchmark, 12 000 steps at batch 1024
 (see [Table 1](paper/main.pdf)):
 
+**E1 — Main CIFAR-10 comparison** (12 000 steps, batch 1024):
+
 | Method             |  val PSNR ↑ | val SSIM ↑ | Usage ↑ | Perplexity ↑ | Samples/s |
 |--------------------|------------:|-----------:|--------:|-------------:|----------:|
-| VQ-VAE (STE)       |    **25.84** | **0.87**  | **1.000** | **948.67**  |    6 545  |
-| RotationVQ (full)  |      21.39  |   0.68   |  0.361  |      173.12  |    6 756  |
-| FSQ                |    (running) | — | — | — | — |
-| Gumbel-Softmax VQ  |    (running) | — | — | — | — |
+| FSQ                |   **27.91** | **0.92**  | N/A (64k) | **4 334.67** |    5 480  |
+| VQ-VAE (STE)       |     25.84   |   0.87   |   1.000   |      948.67  |    6 545  |
+| RotationVQ (full)  |     21.39   |   0.68   |   0.361   |      173.12  |    6 756  |
+| Gumbel-Softmax VQ  |     12.69   |   0.12   |   0.011   |        1.06  |    6 516  |
 
-> ⚠️ **Honest update.** Our initial hypothesis —
-> that routing the full $s\cdot R$ Jacobian through the quantizer
-> would improve over STE — **is not supported by this experiment**.
-> RotationVQ in its full form induces a sharp codebook collapse
-> after $\sim 1{,}000$ steps, which we trace to a positive-feedback
-> interaction with the commitment loss. The ablation sweep
-> (`experiments/E4_gradient_routes.md`) is currently running to
-> localise the failure mode and identify a stable variant.
-> See [`story/05-rotation-collapse.md`](story/05-rotation-collapse.md)
-> for the full diagnostic and decision trail.
+**E4 — Gradient-routing ablation** (2 000 steps, same backbone):
+
+| Backward Jacobian                    | val PSNR | Usage | Perplexity |
+|--------------------------------------|---------:|------:|-----------:|
+| $\mathbf{I}$ (STE)                   |  **23.90** | **0.999** | **788.26** |
+| $s\cdot\mathbf{I}$ (rescale only)    |    23.85 |  1.000 |     807.00 |
+| $\mathbf{R}$ (rotation only)         |    20.56 |  0.184 |      81.30 |
+| $s\cdot\mathbf{R}$ (full)            |    20.73 |  0.429 |     102.07 |
+
+> ⚠️ **Honest result.** Our initial hypothesis that back-propagating
+> the full $s\cdot\mathbf{R}$ Jacobian would improve over STE is
+> **not supported by this experiment**. The ablation above localises
+> the failure to the rotation matrix $\mathbf{R}$: any configuration
+> that back-propagates $\mathbf{R}$ (rows 3 & 4 of E4) collapses the
+> codebook, while any configuration that back-propagates only the
+> scalar rescale $s$ (rows 1 & 2) tracks the STE baseline. The
+> geometric identity $\mathbf{q} = s\cdot\mathbf{R}\cdot\mathbf{z}_e$
+> is correct; its naive use as a backward Jacobian creates a
+> positive-feedback loop that overwhelms the commitment loss. FSQ's
+> codebook-free design sidesteps this entire problem and wins the
+> benchmark. Full diagnostic: [`story/05-rotation-collapse.md`](story/05-rotation-collapse.md).
 
 <p align="center">
   <img src="paper/figures/fig1_architecture.png" alt="Architecture" width="85%"/>
