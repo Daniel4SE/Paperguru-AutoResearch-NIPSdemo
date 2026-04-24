@@ -1,0 +1,58 @@
+data:
+  image_size: 32
+  name: cifar10
+  num_workers: 0
+  root: ~/vq-rotation/data
+logging:
+  out_dir: ~/vq-rotation/results/bench_bs128
+model:
+  decoder:
+    attn_resolutions: []
+    base_ch: 64
+    ch_mults:
+    - 1
+    - 2
+    - 2
+    dropout: 0.0
+    num_res_blocks: 2
+    out_channels: 3
+    output_resolution: 32
+    z_channels: 128
+  embed_dim: 8
+  encoder:
+    attn_resolutions: []
+    base_ch: 64
+    ch_mults:
+    - 1
+    - 2
+    - 2
+    dropout: 0.0
+    in_channels: 3
+    input_resolution: 32
+    num_res_blocks: 2
+    z_channels: 128
+  quantizer:
+    commitment_beta: 0.25
+    ema_decay: 0.99
+    mode: full
+    num_codes: 1024
+    type: rotation
+seed: 0
+train:
+  amp: true
+  batch_size: 128
+  betas:
+  - 0.9
+  - 0.99
+  grad_clip: 1.0
+  log_every: 50
+  lpips_weight: 0.0
+  lr: 0.0002
+  lr_min: 1.0e-06
+  max_steps: 200
+  max_val_batches: 20
+  recon_loss: l1
+  save_every: 100000
+  val_every: 100000
+  val_lpips: false
+  weight_decay: 0.0

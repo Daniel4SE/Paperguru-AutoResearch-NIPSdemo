@@ -1,0 +1,34 @@
+\begin{abstract}
+Vector-quantized autoencoders (VQ-VAEs) underpin much of modern discrete
+representation learning, from tokenizers for autoregressive image
+generation~\citep{esser2021vqgan,yu2022vitvqgan,sun2024llamagen} to the
+latent spaces of high-resolution diffusion
+models~\citep{rombach2022ldm}. Their training, however, relies on the
+straight-through estimator
+(STE,~\citealp{bengio2013ste,vandenoord2017vqvae}), which copies the
+upstream gradient through the non-differentiable nearest-neighbour
+lookup as if the quantization were the identity. This bypasses the
+geometric relationship between the encoder output $\ze$ and its assigned
+codebook vector $\qvec$, and is widely blamed for codebook collapse and
+the persistent gap between reconstructions produced by codebook-based
+and continuous
+latents~\citep{huh2023straighteningste,mentzer2024fsq}. We propose
+\ours{}, a simple drop-in replacement for STE that routes the backward
+pass through the rotation-plus-rescaling transformation that
+analytically maps $\ze$ onto $\qvec$. Concretely, we write the quantized
+output as $\sg{s\rmat}\,\ze$ where $\rmat$ is a rank-one Householder
+reflection aligning $\ze/\|\ze\|$ with $\qvec/\|\qvec\|$ and
+$s=\|\qvec\|/\|\ze\|$ is a scalar rescaling, with the stop-gradient
+operator applied so that the forward value is numerically identical to
+the standard VQ output. The resulting Jacobian of the quantizer is not
+the identity but the very rotation-scaling that the forward pass
+implicitly performs; this preserves angular information between
+$\ze$ and $\qvec$ during backpropagation. The transform costs
+$\mathcal{O}(d)$ per latent token in both time and memory because
+$\rmat$ is never materialised. On CIFAR-10 we observe consistent
+improvements over the STE baseline and matching accuracy against
+codebook-free FSQ~\citep{mentzer2024fsq} and Gumbel-Softmax
+VQ~\citep{jang2017gumbel} in reconstruction PSNR, codebook usage, and
+perplexity. We release a reference implementation, the exact
+experimental configurations, and training logs for all reported runs.
+\end{abstract}

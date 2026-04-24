@@ -1,0 +1,132 @@
+\section{Experimental Setup}
+\label{sec:experimental_setup}
+
+Our evaluation follows a single shared training and evaluation
+pipeline across all baselines and our method; the only difference
+between configurations is the quantizer module used in the
+autoencoder. This controls for architectural differences and isolates
+the effect of the gradient estimator.
+
+\subsection{Datasets}
+
+Our main benchmark is CIFAR-10, a widely used dataset of 50,000
+training and 10,000 validation natural images at $32 \times 32$
+resolution across 10 classes. CIFAR-10 is small enough
+to train multiple strong baselines to convergence in minutes on a
+single H100 and large enough to exhibit the codebook-collapse regime
+reliably; prior work in vector quantization reports on it as a
+primary reconstruction benchmark~\citep{mentzer2024fsq}. We also
+include training throughput measurements and reconstruction case
+studies on CIFAR-10 test images. Scaling experiments on
+higher-resolution datasets (FFHQ $256{\times}256$, ImageNet-1k
+$128{\times}128$) are deferred to the appendix and to future work.
+
+\subsection{Architecture}
+
+We use a VQ-GAN-style encoder-decoder~\citep{esser2021vqgan,
+vandenoord2017vqvae} simplified for the CIFAR-10 resolution. The
+encoder applies a $3{\times}3$ convolution to $64$ channels,
+followed by two residual blocks at each of three resolution levels
+$\{32, 16, 8\}$ with channel multipliers $(1, 2, 2)$ and mid-block
+self-attention at the bottleneck. The corresponding decoder mirrors
+the encoder, upsampling through the same resolutions with three
+residual blocks per level. Group-normalisation and SiLU activations
+are used throughout. A $1{\times}1$ convolution projects the
+encoder's 128-channel bottleneck to the quantizer's working
+dimension $d = 8$, and a symmetric post-quantisation
+$1{\times}1$ convolution lifts back to 128 channels before the
+decoder. The resulting autoencoder has $5.40$M parameters. This
+simplified VQ-GAN backbone is shared across all four quantizer
+configurations.
+
+\subsection{Quantizers}
+
+We compare four quantizer modules that plug into the same encoder
+and decoder. \textbf{VQ-STE} is the baseline of
+\citet{vandenoord2017vqvae}, using the estimator
+in~\eqref{eq:ste}. \textbf{\ours{}} is our proposed estimator
+in~\eqref{eq:our-estimator}. \textbf{Gumbel-Softmax
+VQ}~\citep{jang2017gumbel} replaces the hard $\arg\min$ with a
+differentiable softmax over codes with temperature $\tau$ annealed
+from $1.0$ to $0.5$ during training at rate $3{\cdot}10^{-5}$; a
+$1{\times}1$ convolution maps the encoder bottleneck to the code
+logits. \textbf{FSQ}~\citep{mentzer2024fsq} projects the bottleneck to
+$d = 6$ channels, applies a tanh, and rounds each channel
+independently to one of per-channel levels $(8,8,8,5,5,5)$, giving an
+implicit codebook of $8^3 \cdot 5^3 = 64{,}000$ entries. The three
+codebook-based quantizers share a codebook of $K = 1024$ entries
+and $d = 8$ except where noted in ablations. VQ-STE and \ours{} use
+the same EMA codebook update (decay $\gamma = 0.99$) with
+dead-code reinitialisation from the current batch; this is a
+standard recipe~\citep{razavi2019vqvae2} and is held identical across
+both to ensure a fair comparison of the gradient estimator alone.
+
+\subsection{Training}
+
+All models are trained on a single NVIDIA H100 80GB GPU with PyTorch
+2.6 and TF32 tensor cores. We use AdamW~\citep{loshchilov2019adamw}
+with $\beta = (0.9, 0.99)$, weight decay $0$, gradient clipping at
+$1.0$, and a cosine learning-rate schedule from the peak value to
+$10^{-6}$. The batch size is $1024$ with a peak learning rate of
+$1.6 \times 10^{-3}$ (linearly scaled from the $2 \times 10^{-4}$
+baseline used with batch $128$). We train for $12{,}000$
+steps, which is approximately $246$ epochs on the $50{,}000$-image
+CIFAR-10 training split. The reconstruction loss is an $\ell_1$
+error on pixel values in $[0, 1]$ (we do not add an LPIPS or
+adversarial loss to avoid confounding the gradient-estimator
+comparison with loss engineering). The commitment coefficient is
+$\beta = 0.25$ for the codebook-based quantizers, matching
+\citet{vandenoord2017vqvae}; FSQ has no explicit commitment loss.
+
+\subsection{Evaluation metrics}
+
+\paragraph{Reconstruction quality.}
+We report peak signal-to-noise ratio (PSNR) and structural
+similarity (SSIM) on the full $10{,}000$-image CIFAR-10 validation
+set. PSNR is reported on images with pixel values in $[0,1]$ using
+the standard definition $\mathrm{PSNR} = -10\log_{10}
+\mathrm{MSE}$. SSIM is computed per-image via scikit-image and
+averaged. For a subset of configurations we additionally report
+LPIPS~\citep{zhang2018lpips} with the AlexNet backbone as a
+perceptual complement.
+
+\paragraph{Codebook statistics.}
+For codebook-based quantizers we report the \emph{usage} fraction
+(the number of codes used at least once on the validation set
+divided by $K$), the \emph{perplexity}
+$\exp(-\sum_k p_k \log p_k)$ where $p_k$ is the empirical probability
+of code $k$ on the validation set, and the number of \emph{active
+codes per batch} during training. A higher perplexity relative to
+$K$ indicates a more uniform use of the codebook, which is a widely
+accepted proxy for the ``capacity'' actually used by the
+tokenizer~\citep{huh2023straighteningste,
+zheng2023onlineclustered}. For FSQ we report perplexity over the
+implicit codebook indices; the usage fraction is omitted because the
+implicit codebook is much larger than the number of tokens seen in a
+validation pass.
+
+\paragraph{Throughput.}
+We report wall-clock seconds per training step and samples per
+second, averaged over the second half of each run (after any
+warm-up) on the same H100 hardware.
+
+\subsection{Ablations}
+
+In addition to the main comparison we run two ablation axes within
+\ours{}. The first is the \emph{gradient-routing ablation} over
+\{\textsc{ste}, rotation-only, rescale-only, full\} of
+Section~\ref{sec:method}, which isolates the contribution of the
+rotation $\rmat$ and the rescaling $s$ while keeping all other
+training hyperparameters fixed. The second is the \emph{codebook-size
+ablation} over $K \in \{1024, 4096, 8192, 16384\}$, which probes
+whether the benefit of the rotation estimator grows or shrinks with
+codebook capacity. All ablation runs use the same $12{,}000$-step
+budget and shared seed ($0$) for reproducibility.
+
+\subsection{Reproducibility}
+
+We fix the PyTorch, NumPy, and CUDA random seeds at the start of each
+run. All configuration files, training scripts, and log files
+accompany the submission. The checkpoint format is the same across
+quantizers so that downstream tokenizer benchmarks can be driven off
+a single loading routine.

@@ -1,0 +1,83 @@
+\section{Implementation Details}
+\label{app:implementation}
+
+\subsection{Numerical verification of the Jacobian}
+
+We unit-test the identity $\partial \zq^{\,\ours} / \partial \ze = s\rmat$
+by comparing the autograd Jacobian against the analytic reflection
+on a single-token, $d=4$ example. With codebook vector $\qvec =
+(1.0, 0.5, -0.2, 0.1)$ and encoder output $\ze = (0.9, 0.45, -0.15,
+0.08)$, the agreement between the autograd Jacobian and the
+analytic $s\rmat$ is $\|J - s\rmat\|_\infty = 1.19 \times 10^{-7}$
+in single precision, which is at the level of FP32 rounding.
+Forward-output equality $\zq = \qvec$ holds to within $2 \times
+10^{-5}$ across a range of inputs.
+
+\subsection{EMA codebook updates under mixed precision}
+
+Codebook buffers are kept in FP32 regardless of any FP16/BF16
+autocast context surrounding the forward pass. When an encoder
+feature is produced under autocast it is first cast to FP32 before
+updating the codebook's $\ell_2$ moving averages, which avoids
+underflow in the cluster-size counts and keeps the codebook
+representation consistent across training and evaluation.
+
+\subsection{Hyperparameter table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lr}
+\toprule
+Hyperparameter & Value \\
+\midrule
+Encoder base channels              & 64 \\
+Encoder / decoder channel mults    & $(1, 2, 2)$ \\
+Encoder residual blocks per level  & 2 \\
+Latent (z) channels                & 128 \\
+Quantizer dim $d$                  & 8 \\
+Codebook size $K$                  & 1024 \\
+Commitment coefficient $\beta$     & 0.25 \\
+EMA decay $\gamma$                 & 0.99 \\
+Dead-code threshold                & 1.0 \\
+Batch size                         & 1024 \\
+Peak learning rate                 & $1.6\times 10^{-3}$ \\
+LR schedule                        & cosine to $10^{-6}$ \\
+Optimiser                          & AdamW, $\beta=(0.9,0.99)$ \\
+Gradient clip                      & 1.0 \\
+Training steps                     & 12{,}000 \\
+Precision                          & FP32 + TF32 \\
+\bottomrule
+\end{tabular}
+\caption{CIFAR-10 training hyperparameters, shared across all four
+quantizers.}
+\end{table}
+
+\subsection{Training throughput breakdown}
+
+On a single NVIDIA H100 80GB, at batch size $1024$ and FP32+TF32
+precision, a forward-backward-optimiser step of the full $5.40$M
+parameter autoencoder takes approximately $165$~ms. This corresponds
+to $\sim 6{,}200$ samples/s, or a full CIFAR-10 epoch every
+$\sim 8$ seconds. A complete $12{,}000$-step run therefore requires
+$\approx 33$ minutes of wall time. The four quantizer variants
+tested in this paper differ by less than measurement noise on this
+metric.
+
+\subsection{Codebook warm-up}
+
+At initialisation the codebook is populated with a small Gaussian
+noise; the first training batch triggers a data-dependent
+initialisation that replaces the codebook with random rows from the
+first mini-batch of encoder features. This recipe is standard for
+VQ-VAEs~\citep{razavi2019vqvae2} and is held identical across
+baselines and our method. The data-dependent initialisation resolves
+the chicken-and-egg problem in which random codebook vectors are
+unlikely to be close to any encoder output and therefore accumulate
+zero gradient.
+
+\subsection{Additional case studies}
+
+Additional reconstruction case studies on CIFAR-10 validation images
+for each of the four quantizers, along with zoomed error maps, will
+accompany the final camera-ready version.

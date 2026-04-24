@@ -1,0 +1,25 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+Vector-quantized autoencoders are the discrete interface between
+continuous perceptual inputs and the token streams that power
+modern sequence models. Training them well has long been
+complicated by the zero-gradient $\arg\min$ at their heart, and the
+community has responded with a wide array of workarounds ranging
+from relaxations~\citep{jang2017gumbel,maddison2017concrete} and
+STE corrections~\citep{huh2023straighteningste,
+shah2024decoupledste} to the elimination of the codebook
+entirely~\citep{mentzer2024fsq}. We contributed a conservative
+alternative: leave the forward pass bit-exact, but replace the
+identity Jacobian of the STE with the closed-form rotation-plus-
+scaling Jacobian that is mathematically implicit in the quantizer's
+forward output. Because the rotation is a Householder reflection,
+the operator is $\mathcal{O}(d)$ per token and has no trainable
+parameters; because the construction uses stop-gradient wrappers
+carefully, the forward output of the quantizer is indistinguishable
+from that of an STE-trained VQ-VAE. On CIFAR-10 the estimator
+improves reconstruction PSNR and codebook utilisation over the STE
+baseline and matches the codebook-free FSQ alternative, at
+throughput within measurement noise of the plain VQ implementation.
+Scaling to higher-resolution datasets and evaluating downstream
+generative quality are the natural next steps.

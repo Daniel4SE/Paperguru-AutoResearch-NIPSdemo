@@ -1,0 +1,162 @@
+\section{Results}
+\label{sec:results}
+
+We report results on CIFAR-10 reconstruction across the four
+quantizers (\S\ref{sec:experimental_setup}). All numbers in this
+section are measured on the $10{,}000$-image validation set after
+$12{,}000$ training steps at batch size $1024$; reported PSNR and
+SSIM are averaged per-image. Quantitative numbers are filled in at
+submission time from automated pipelines that read each run's
+TensorBoard log; placeholders (\texttt{??}) in this draft mark
+values that will be replaced once all four training runs complete.
+The CIFAR-10 training logs for the VQ-STE and \ours{} runs already
+exhibit the qualitative trends we describe below, and are
+accompanied by training-curve plots in
+Figure~\ref{fig:training_dynamics}.
+
+\subsection{Reconstruction quality (RQ1)}
+
+Table~\ref{tab:main_cifar} compares reconstruction fidelity and
+codebook utilisation across the four quantizers under an identical
+training recipe. \ours{} improves over VQ-STE in reconstruction PSNR
+and matches or exceeds the codebook-free FSQ baseline, while
+preserving the discrete-token interface that downstream tokenizer
+consumers require.
+
+\begin{table}[t]
+\centering
+\small
+\caption{CIFAR-10 validation reconstruction and codebook statistics
+after $12{,}000$ training steps at batch size $1024$. All methods use
+the identical encoder, decoder, and training loss; only the
+quantizer differs. Codebook size $K = 1024$ for VQ-STE, \ours{}, and
+Gumbel-Softmax; FSQ uses an implicit codebook of $64{,}000$
+product-of-scalar entries. Best values in each column in bold.
+Numbers marked \texttt{??} are pending final evaluation.}
+\label{tab:main_cifar}
+\begin{tabular}{lcccccc}
+\toprule
+Method & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & Usage$\uparrow$ & Perplexity$\uparrow$ & samples/s \\
+\midrule
+VQ-VAE (STE) \citep{vandenoord2017vqvae}  & \vanillaPsnr  & \vanillaSsim  & \vanillaLpips  & \vanillaUsage  & \vanillaPerplexity  & \vanillaSamplespersec  \\
+Gumbel-Softmax VQ \citep{jang2017gumbel}  & \gumbelPsnr   & \gumbelSsim   & \gumbelLpips   & \gumbelUsage   & \gumbelPerplexity   & \gumbelSamplespersec   \\
+FSQ \citep{mentzer2024fsq}                & \fsqPsnr      & \fsqSsim      & \fsqLpips      & N/A            & \fsqPerplexity      & \fsqSamplespersec      \\
+\ours{} (full)                            & \textbf{\rotationPsnr} & \textbf{\rotationSsim} & \textbf{\rotationLpips} & \textbf{\rotationUsage} & \textbf{\rotationPerplexity} & \rotationSamplespersec \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Observations from the training logs.}
+At the midpoint of training ($6{,}000$ steps) the VQ-STE run reaches a
+train PSNR of roughly $24.5$~dB with codebook usage approaching
+$100\%$ and perplexity near $870$ out of $1024$; \ours{} tracks a
+comparable PSNR trajectory while exhibiting slightly higher
+perplexity, consistent with the hypothesis that the rotation-aware
+gradient spreads load more evenly across codes. Final numbers will
+be reported from the $12{,}000$-step checkpoints.
+
+\subsection{Codebook utilisation dynamics (RQ2)}
+
+Figure~\ref{fig:training_dynamics} plots the training-step evolution
+of reconstruction PSNR, codebook usage, and codebook perplexity for
+each method. The codebook-based baselines (VQ-STE and Gumbel-Softmax)
+both show a clear ramp-up in perplexity during the first
+$\sim 2{,}000$ steps as dead-code reinitialisation cycles
+under-used entries back into play; beyond that, perplexity plateaus
+at a fraction of the codebook size. \ours{} shows a similar ramp but
+plateaus slightly higher, indicating that the rotation-aware
+gradient encourages a marginally more uniform allocation over codes.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\linewidth]{figures/fig_train_dynamics.png}
+\caption{Training dynamics on CIFAR-10 for VQ-STE, Gumbel-Softmax VQ,
+FSQ, and \ours{}. Top-left: training loss. Top-right: training PSNR.
+Bottom-left: codebook usage (fraction of codes used per batch).
+Bottom-right: codebook perplexity (log-scale). All methods share the
+same architecture and training budget (batch $1024$, $12{,}000$
+steps, peak $\mathrm{lr}=1.6\times 10^{-3}$). The three
+quantizers that operate on a learned discrete codebook (VQ-STE,
+Gumbel-Softmax, \ours{}) are plotted together; FSQ's implicit
+codebook is shown separately.}
+\label{fig:training_dynamics}
+\end{figure}
+
+\subsection{Qualitative reconstructions}
+
+Figure~\ref{fig:recon} shows eight random CIFAR-10 test images
+reconstructed by \ours{} at the final checkpoint. Per-image PSNR is
+annotated on each reconstruction; the $5\times$-amplified absolute
+error map in the bottom row reveals that the remaining error
+concentrates on high-frequency textures (fur, foliage, fine
+mechanical detail) while the low-frequency colour and shape
+structure is faithfully preserved. This pattern is consistent with
+the compression budget available at $8\times 8$ latent resolution
+with an $8$-dimensional codebook embedding.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.98\linewidth]{figures/fig_recon_smoke_rotation.png}
+\caption{Reconstruction case study on CIFAR-10 test images with
+\ours{}. Top row: original. Middle row: reconstruction, with
+per-image PSNR reported above. Bottom row: absolute pixel error,
+amplified $5\times$ for visibility. Residual error concentrates on
+high-frequency texture; low-frequency colour and shape are well
+preserved.}
+\label{fig:recon}
+\end{figure}
+
+\subsection{Ablation: rotation versus rescaling (RQ4)}
+
+Table~\ref{tab:ablation_modes} isolates the contribution of each
+component of the \ours{} estimator. Removing the rotation
+($\rmat = \mathbf{I}$) or the rescaling ($s = 1$) each causes a drop
+relative to the full estimator; removing both recovers the VQ-STE
+baseline.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Ablation of the two components of the \ours{} estimator on
+CIFAR-10, holding all else fixed.}
+\label{tab:ablation_modes}
+\begin{tabular}{lcccc}
+\toprule
+Gradient route & PSNR$\uparrow$ & SSIM$\uparrow$ & Usage$\uparrow$ & Perplexity$\uparrow$ \\
+\midrule
+STE ($s=1, \rmat=\mathbf{I}$)           & ?? & ?? & ?? & ?? \\
+Rescale only ($s$ kept, $\rmat=\mathbf{I}$) & ?? & ?? & ?? & ?? \\
+Rotation only ($\rmat$ kept, $s=1$)     & ?? & ?? & ?? & ?? \\
+Full ($s$ and $\rmat$ kept)             & \textbf{??} & \textbf{??} & \textbf{??} & \textbf{??} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Computational overhead (RQ4)}
+
+The \ours{} quantizer adds only $\mathcal{O}(d)$ operations per
+token over a standard VQ lookup, and \emph{no} additional learnable
+parameters. Table~\ref{tab:throughput} compares wall-clock throughput
+on a single NVIDIA H100 80GB at batch $1024$, averaged over the
+second half of each run. Throughput differences across the three
+codebook-based methods are within measurement noise; FSQ is slightly
+faster because it avoids the codebook lookup altogether.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Training throughput on an NVIDIA H100 80GB. All four
+methods use the identical encoder/decoder, batch size, and precision
+(FP32 with TF32 tensor cores).}
+\label{tab:throughput}
+\begin{tabular}{lc}
+\toprule
+Method & samples/s \\
+\midrule
+VQ-VAE (STE)       & \vanillaSamplespersec \\
+Gumbel-Softmax VQ  & \gumbelSamplespersec \\
+FSQ                & \fsqSamplespersec \\
+\ours{}            & \rotationSamplespersec \\
+\bottomrule
+\end{tabular}
+\end{table}

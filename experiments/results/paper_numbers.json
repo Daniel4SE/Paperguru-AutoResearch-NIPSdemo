@@ -1,0 +1,22 @@
+{
+  "vanilla": {
+    "psnr": 25.838762283325195,
+    "ssim": 0.8688033223152161,
+    "usage": 1.0,
+    "perplexity": 948.6664428710938,
+    "trainpsnr": 26.981491088867188,
+    "trainusage": 1.0,
+    "trainperplexity": 942.72119140625,
+    "wallsec": 1846.072639465332,
+    "stepspersec": 6.392489519490338
+  },
+  "rotation": {
+    "trainpsnr": 20.214073181152344,
+    "trainusage": 0.8583984375,
+    "trainperplexity": 654.1233520507812,
+    "wallsec": 79.94455981254578,
+    "stepspersec": 7.517709790500147
+  },
+  "fsq": {},
+  "gumbel": {}
+}

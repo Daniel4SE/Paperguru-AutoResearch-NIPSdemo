@@ -1,0 +1,26 @@
+seed: 0
+data: {name: cifar10, root: ~/vq-rotation/data, image_size: 32, num_workers: 4}
+model:
+  embed_dim: 8
+  quantizer: {type: rotation, num_codes: 1024, commitment_beta: 0.25, ema_decay: 0.99, mode: full}
+  encoder: {in_channels: 3, base_ch: 64, ch_mults: [1, 2, 2], num_res_blocks: 2,
+            z_channels: 128, attn_resolutions: [], input_resolution: 32, dropout: 0.0}
+  decoder: {out_channels: 3, base_ch: 64, ch_mults: [1, 2, 2], num_res_blocks: 2,
+            z_channels: 128, attn_resolutions: [], output_resolution: 32, dropout: 0.0}
+train:
+  batch_size: 128
+  lr: 2.0e-4
+  lr_min: 1.0e-6
+  betas: [0.9, 0.99]
+  weight_decay: 0.0
+  max_steps: 50000
+  grad_clip: 1.0
+  amp: true
+  recon_loss: l1
+  lpips_weight: 0.0
+  log_every: 100
+  val_every: 2000
+  save_every: 10000
+  max_val_batches: 20
+  val_lpips: false
+logging: {out_dir: ~/vq-rotation/results/cifar10_rotation}

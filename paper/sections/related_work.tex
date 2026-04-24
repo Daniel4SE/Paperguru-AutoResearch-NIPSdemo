@@ -1,0 +1,101 @@
+\section{Related Work}
+\label{sec:related_work}
+
+\paragraph{Vector-quantized autoencoders.}
+\citet{vandenoord2017vqvae} introduced VQ-VAE by pairing a
+convolutional encoder/decoder with a learned codebook and training
+the combination with a reconstruction loss and a commitment loss, all
+routed through the straight-through estimator.
+\citet{razavi2019vqvae2} scaled the architecture to hierarchical
+latents and observed that dead codes accumulate without
+reinitialisation. VQ-GAN~\citep{esser2021vqgan} combined the VQ
+tokenizer with adversarial and perceptual losses and an autoregressive
+prior for image synthesis; ViT-VQGAN~\citep{yu2022vitvqgan} improved
+both reconstruction quality and codebook usage by replacing the
+convolutional backbone with a Vision Transformer and regularising the
+codebook lookup. Improved tokenizer training has since been shown to
+benefit downstream autoregressive
+generation~\citep{sun2024llamagen,yu2024titok,chang2022maskgit} and to
+be the critical factor that lets language-model-style generators catch
+up with diffusion~\citep{yu2023magvit2}. Our contribution is
+orthogonal to these architectural refinements: it modifies only the
+gradient flow through the quantizer and leaves the encoder,
+decoder, and training losses untouched.
+
+\paragraph{Codebook collapse and rebalancing.}
+Codebook collapse, in which a training run converges with the vast
+majority of code slots unused, has been attacked from many
+angles. Dead-code reinitialisation and EMA updates on the codebook
+itself~\citep{vandenoord2017vqvae,razavi2019vqvae2} are standard
+remedies; \citet{zheng2023onlineclustered} propose an online-clustering
+alternative that re-assigns under-used codes; \citet{baykal2023edvae}
+frame the collapse as an overconfidence problem and use evidential
+posteriors to spread probability mass across codes; and
+\citet{zhang2024optimaltransportvq} enforce a balanced assignment via
+optimal-transport matching between encoder outputs and codes. Other
+work tackles collapse structurally: \citet{khalil2023llvqvae} replace
+a learned codebook with a lattice, \citet{xu2025gaussianvq} build a
+Gaussian VAE around the quantizer, and \citet{chen2024vqdimbalance}
+analyse the balance between codebook size and embedding dimension.
+\citet{takida2024hqvae} train a hierarchical variant whose codebooks
+are updated variationally. None of these works change the gradient
+estimator itself; our method is therefore complementary and can be
+combined with any of them.
+
+\paragraph{Gradient estimation through discrete operators.}
+The straight-through estimator of \citet{bengio2013ste}, originally
+proposed for stochastic binary neurons, was adapted to VQ-VAEs by
+\citet{vandenoord2017vqvae} and remains the default.
+\citet{huh2023straighteningste} document the severity of the
+STE-induced optimisation pathology for VQ networks and propose
+alternating minimisation and a rotation-based residual term that
+reshapes the gradient.
+\citet{shah2024decoupledste} decouple the forward and backward
+identities of the STE to reduce bias.
+\citet{liu2023discretebackprop} derive a family of corrections that
+interpolate between the STE and the true chain rule. On the
+continuous-relaxation side, the
+Gumbel-Softmax~\citep{jang2017gumbel} and concrete
+distribution~\citep{maddison2017concrete} replace the hard
+$\arg\min$ with a temperature-controlled softmax; variants such as
+REBAR~\citep[and follow-ups]{jang2017gumbel} trade bias for lower
+variance. \citet{vali2022nsvq} substitute random noise for the
+quantization residual to obtain an unbiased stochastic estimator.
+Our estimator differs in a specific way: its forward output is
+bit-exact VQ (no relaxation temperature, no stochasticity) and its
+backward Jacobian is the closed-form rotation-plus-scaling that the
+forward lookup implicitly performs, rather than the identity, a
+correction, or a noise-based surrogate.
+
+\paragraph{Rotation-trick and concurrent work.}
+The closest prior art is the \emph{rotation trick} of
+\citet{fifty2024rotation}, which independently identified that the
+STE discards angular information and proposed to replace the
+gradient-path identity with a rotation that maps $\ze$ to $\qvec$.
+We differ from~\citet{fifty2024rotation} on three points. First, we
+derive the Householder reflection in closed form as
+$\rmat = \mathbf{I} - 2\vvec\vvec^\top$ with a specific
+unit-norm $\vvec$, yielding an $\mathcal{O}(d)$-per-token
+implementation that never materialises the matrix; no additional
+parameters are learned. Second, we combine the rotation with a scalar
+rescaling $s = \|\qvec\|/\|\ze\|$, and we ablate the two components
+separately (\S\ref{sec:results}) to isolate their contributions.
+Third, we analyse the numerical-stability regime in which
+$\ze \approx \qvec$ and provide a stop-gradient wrapper that
+guarantees bit-exact forward output even when the reflection is
+ill-conditioned. These changes are orthogonal to the codebook-free
+direction taken by FSQ~\citep{mentzer2024fsq}, which eliminates the
+lookup entirely by bounding the latent with a tanh and rounding each
+channel independently.
+
+\paragraph{Downstream tokenizer-based generation.}
+Discrete tokenizers are the backbone of autoregressive and masked
+generative transformers that operate in image, video, and
+unified-multimodal settings~\citep{esser2021vqgan,chang2022maskgit,
+sun2024llamagen,gu2022vqdiffusion,yu2023magvit2,yu2024titok,
+kolesnikov2022uvim}. Because these downstream models freeze the
+tokenizer during training, any improvement to the tokenizer's
+reconstruction fidelity and codebook utilisation propagates directly
+into downstream sample quality. Our experiments therefore target
+reconstruction metrics first and reserve the downstream generation
+benchmark (E5 in our experimental matrix) as a secondary evaluation.

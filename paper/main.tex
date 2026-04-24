@@ -1,0 +1,122 @@
+% ======================================================================
+% Rotation-Aware Gradient Estimation for Vector-Quantized Autoencoders
+% Target venue: NeurIPS 2026 (main track)
+%
+% Build:  pdflatex main && bibtex main && pdflatex main && pdflatex main
+% Style:  self-contained preamble compatible with neurips_2024.sty-style
+%         layouts; swap in the official NeurIPS 2026 class when it ships.
+% ======================================================================
+
+\documentclass{article}
+
+% ---- page geometry approximating NeurIPS (9in height, 1-col 5.5in) ----
+\usepackage[letterpaper, margin=1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% ---- core math / figure / table / ref packages ----
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage[numbers, sort&compress]{natbib}
+\usepackage{hyperref}
+\usepackage[capitalize, noabbrev]{cleveref}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% ---- hyperref colours ----
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  citecolor=blue!55!black,
+  urlcolor=blue!55!black,
+}
+
+% ---- theorem environments ----
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+% ---- notation shortcuts ----
+\newcommand{\ze}{\mathbf{z}_e}
+\newcommand{\zq}{\mathbf{z}_q}
+\newcommand{\qvec}{\mathbf{q}}
+\newcommand{\vvec}{\mathbf{v}}
+\newcommand{\rmat}{\mathbf{R}}
+\newcommand{\sg}[1]{\operatorname{sg}\!\left[#1\right]}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\CB}{\mathcal{C}}
+\newcommand{\Loss}{\mathcal{L}}
+\newcommand{\ours}{\textsc{RotationVQ}}
+
+% ---- number macros (fallback = "??" until results_numbers.tex is input) ----
+\providecommand{\vanillaPsnr}{??}
+\providecommand{\vanillaSsim}{??}
+\providecommand{\vanillaLpips}{??}
+\providecommand{\vanillaUsage}{??}
+\providecommand{\vanillaPerplexity}{??}
+\providecommand{\vanillaSamplespersec}{??}
+\providecommand{\rotationPsnr}{??}
+\providecommand{\rotationSsim}{??}
+\providecommand{\rotationLpips}{??}
+\providecommand{\rotationUsage}{??}
+\providecommand{\rotationPerplexity}{??}
+\providecommand{\rotationSamplespersec}{??}
+\providecommand{\fsqPsnr}{??}
+\providecommand{\fsqSsim}{??}
+\providecommand{\fsqLpips}{??}
+\providecommand{\fsqPerplexity}{??}
+\providecommand{\fsqSamplespersec}{??}
+\providecommand{\gumbelPsnr}{??}
+\providecommand{\gumbelSsim}{??}
+\providecommand{\gumbelLpips}{??}
+\providecommand{\gumbelUsage}{??}
+\providecommand{\gumbelPerplexity}{??}
+\providecommand{\gumbelSamplespersec}{??}
+% Include auto-generated numbers if present
+\IfFileExists{results_numbers.tex}{\input{results_numbers.tex}}{}
+
+% ---- title / authors placeholder (blind submission) ----
+\title{Rotation-Aware Gradient Estimation for\\Vector-Quantized Autoencoders}
+
+\author{%
+  Anonymous Authors\\
+  Anonymous Institution\\
+  \texttt{anon@example.org}
+}
+
+\begin{document}
+\maketitle
+
+% ----------------------------------------------------------------------
+% Paper body (one section per file for reviewability)
+% ----------------------------------------------------------------------
+
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/related_work}
+\input{sections/method}
+\input{sections/experimental_setup}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/conclusion}
+
+% ---- bibliography ----
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+% ---- appendix ----
+\appendix
+\input{sections/appendix}
+
+\end{document}

@@ -1,0 +1,224 @@
+\section{Method}
+\label{sec:method}
+
+\subsection{Problem setting}
+
+Let an encoder $E_\theta$ map an image $\mathbf{x} \in \R^{3 \times H
+\times W}$ to a feature map $\ze \in \R^{d \times h \times w}$. A
+codebook $\CB = \{\mathbf{e}_k\}_{k=1}^{K} \subset \R^{d}$ contains
+$K$ vectors. At each spatial location the quantizer performs
+nearest-neighbour lookup
+\begin{equation}
+  k^* = \arg\min_{k \in [K]} \,\|\ze - \mathbf{e}_k\|_2, \qquad
+  \qvec := \mathbf{e}_{k^*},
+  \label{eq:nnlookup}
+\end{equation}
+and emits $\zq = \qvec$. A decoder $D_\phi$ reconstructs
+$\hat{\mathbf{x}} = D_\phi(\zq)$. Training minimises
+\begin{equation}
+  \Loss(\theta,\phi,\CB) \;=\;
+    \underbrace{\|\mathbf{x} - \hat{\mathbf{x}}\|_1}_{\text{reconstruction}} \;+\;
+    \beta\,\underbrace{\|\ze - \sg{\qvec}\|_2^2}_{\text{commitment}} \;+\;
+    \text{(EMA codebook update)}.
+  \label{eq:loss}
+\end{equation}
+The EMA update replaces an explicit codebook loss and decays
+cluster-membership statistics with rate
+$\gamma$~\citep{razavi2019vqvae2}. The difficulty is the $\arg\min$
+in~\eqref{eq:nnlookup}: it is piecewise constant and therefore has
+zero gradient with respect to $\ze$ almost everywhere.
+
+\subsection{The straight-through estimator, re-examined}
+
+The standard remedy is to substitute the quantizer with the
+identity-gradient surrogate
+\begin{equation}
+  \zq^{\mathrm{ste}} \;=\; \ze + \sg{\qvec - \ze},
+  \label{eq:ste}
+\end{equation}
+so that the forward output is $\qvec$ but the backward derivative is
+$\partial \zq^{\mathrm{ste}} / \partial \ze = \mathbf{I}$. The
+identity Jacobian has two consequences that motivate this work.
+First, \emph{the gradient the encoder receives does not depend on
+which code was selected}, because
+$\partial \zq^{\mathrm{ste}} / \partial \ze$ does not involve $\qvec$
+at all. Second, \emph{the angular relationship between $\ze$ and
+$\qvec$ is discarded}. Intuitively, if a particular $\ze$ is mapped
+to a $\qvec$ that is nearly orthogonal to it, the encoder should be
+pushed strongly to realign its output; under STE it is pushed only by
+the reconstruction loss, which propagates through the decoder and
+may not expose the misalignment directly.
+
+\subsection{Rotation-plus-rescaling identity}
+
+We now derive an identity that will act as the backward surrogate.
+Assume for this subsection that $\ze \neq \mathbf{0}$ and
+$\qvec \neq \mathbf{0}$; we handle degenerate cases below. Define
+the unit vectors $\hat{\ze} = \ze/\|\ze\|$ and
+$\hat{\qvec} = \qvec/\|\qvec\|$ and their difference
+$\mathbf{u} = \hat{\ze} - \hat{\qvec}$. When $\hat{\ze} \neq
+\hat{\qvec}$ the Householder reflection
+\begin{equation}
+  \rmat \;=\; \mathbf{I} - 2\,\vvec\vvec^\top,
+  \qquad
+  \vvec \;=\; \mathbf{u}/\|\mathbf{u}\|,
+  \label{eq:householder}
+\end{equation}
+is a symmetric, orthogonal involution that satisfies
+$\rmat\,\hat{\ze} = \hat{\qvec}$. Indeed, writing
+$c = \hat{\ze}^\top\hat{\qvec}$ gives $\|\mathbf{u}\|^2 = 2(1 - c)$ and
+\begin{equation}
+  \rmat\,\hat{\ze}
+    = \hat{\ze} - 2(\vvec^\top\hat{\ze})\,\vvec
+    = \hat{\ze} - 2\cdot\tfrac{1-c}{\|\mathbf{u}\|}\cdot\vvec
+    = \hat{\ze} - \|\mathbf{u}\|\,\vvec
+    = \hat{\ze} - \mathbf{u}
+    = \hat{\qvec}.
+  \label{eq:reflection-check}
+\end{equation}
+Scaling by $s = \|\qvec\|/\|\ze\|$ and multiplying both sides of
+$\rmat\hat{\ze} = \hat{\qvec}$ by $\|\qvec\|$ gives
+\begin{equation}
+  s\,\rmat\,\ze \;=\; \qvec.
+  \label{eq:identity}
+\end{equation}
+Equation~\eqref{eq:identity} is a \emph{closed-form linear map} from
+$\ze$ to $\qvec$: a rotation-reflection and an isotropic scaling, no
+free parameters. When $\hat{\ze} = \hat{\qvec}$ (i.e. already aligned)
+we take $\rmat = \mathbf{I}$; the scaling $s$ still matches the norms.
+
+\subsection{The \ours{} estimator}
+
+We now use~\eqref{eq:identity} as the backward route. The estimator
+is
+\begin{equation}
+  \boxed{\;\zq^{\,\ours} \;=\; \sg{s\rmat}\,\ze \;+\; \sg{\qvec - \sg{s\rmat}\,\ze}\,.\;}
+  \label{eq:our-estimator}
+\end{equation}
+The first term carries the gradient and has Jacobian $s\rmat$ with
+respect to $\ze$ because both $s$ and $\rmat$ are stop-gradients.
+The second term is an entirely detached residual that forces the
+forward output to equal $\qvec$ bit-exactly. Consequently
+\begin{equation}
+  \underbrace{\zq^{\,\ours}}_{\text{forward}} \;=\; \qvec,
+  \qquad
+  \underbrace{\partial \zq^{\,\ours} / \partial \ze}_{\text{backward}} \;=\; s\rmat.
+  \label{eq:fwd-bwd}
+\end{equation}
+The encoder therefore receives gradient $g_{\ze} = (s\rmat)^\top
+g_{\zq} = s\rmat g_{\zq}$ (since $\rmat^\top = \rmat$), a
+\emph{scaled rotation} of the decoder-side gradient that preserves
+its magnitude (up to $s$, which is constant in $\ze$) while
+reorienting it through the direction that the forward lookup
+implicitly pointed to.
+
+\paragraph{Ablation decomposition.}
+Equation~\eqref{eq:our-estimator} admits three natural ablations that
+we use in Section~\ref{sec:results}. Setting $\rmat = \mathbf{I}$
+while keeping $s$ (``rescale-only'') corresponds to propagating
+$s\,\ze$ and discards the angular correction. Setting $s = 1$ while
+keeping $\rmat$ (``rotation-only'') propagates $\rmat\,\ze$ and
+discards the norm correction. Setting both to identity recovers the
+standard STE in~\eqref{eq:ste}. Each variant shares the same forward
+pass, so any differences measured in validation reconstruction,
+codebook usage, or downstream performance are attributable to the
+gradient routing alone.
+
+\subsection{Why Householder?}
+
+The map from $\ze$ to $\qvec$ up to rescaling is determined by an
+element of the orthogonal group $O(d)$ only up to the $(d{-}1)$-sphere
+of rotations that fix $\hat{\qvec}$. We choose the specific element
+that lies in the two-dimensional plane spanned by $\hat{\ze}$ and
+$\hat{\qvec}$; this is the Householder reflection
+in~\eqref{eq:householder} and is the unique rotation whose action
+on vectors orthogonal to that plane is the identity. Three practical
+consequences follow.
+(i) $\rmat$ is rank-one-plus-identity and requires only the vector
+$\vvec \in \R^{d}$ to describe; the action
+$\rmat\mathbf{x} = \mathbf{x} - 2(\vvec^\top\mathbf{x})\vvec$ costs
+$\mathcal{O}(d)$ per token in both memory and compute, strictly
+cheaper than an extra $d \times d$ linear layer.
+(ii) Because $\rmat$ is an involution, $\rmat^2 = \mathbf{I}$, which
+lets us verify the identity in~\eqref{eq:reflection-check} numerically
+to machine precision.
+(iii) Householder reflections are the building blocks of stable
+$QR$ decompositions; our operator inherits the standard numerical
+recipes for handling small $\|\mathbf{u}\|$ (see below).
+
+\subsection{Numerical stability}
+
+The naive implementation of~\eqref{eq:householder} divides by
+$\|\mathbf{u}\| = \sqrt{2(1-c)}$, which is small when $\ze$ and
+$\qvec$ are nearly parallel. In that regime $\hat{\ze} \approx
+\hat{\qvec}$, so both $\rmat \approx \mathbf{I}$ and $s \approx 1$ and
+the surrogate already behaves like the STE up to the norm
+correction. Rather than branch, we use the stop-gradient decomposition
+in~\eqref{eq:our-estimator}: the second term forces the forward
+output to be $\qvec$ regardless of how ill-conditioned $\rmat$ is,
+and the backward gradient is dominated by $\mathbf{I}$ whenever
+$\rmat$ is numerically close to $\mathbf{I}$. We guard
+$\|\mathbf{u}\|$ against division-by-zero with a small
+$\varepsilon$ (set to $10^{-6}$ in practice) and zero out the
+reflection component whenever $\|\mathbf{u}\| < \varepsilon$, in
+which case $\zq^{\,\ours}$ reduces smoothly to $s\,\ze + \sg{\qvec - s\,\ze}$.
+This behaviour is verified empirically in Section~\ref{sec:results}:
+our unit tests confirm that the autograd Jacobian agrees with
+$s\rmat$ to within $10^{-7}$ in single precision when $\ze$ is well
+separated from $\qvec$, and that the forward output matches $\qvec$ to
+within $10^{-5}$ for inputs drawn after codebook warm-up.
+
+\subsection{Algorithm and cost}
+
+Algorithm~\ref{alg:rotquant} summarises the per-token forward pass.
+All operations are $\mathcal{O}(d)$ and trivially parallelise over
+the batch, spatial grid, and codebook dimensions; the operator is
+implemented with three fused elementwise tensor ops and no matrix
+materialisation. Memory overhead is $d$ floats per token for
+$\vvec$ (freed after the backward pass) and one scalar for $s$. When
+compared against a baseline VQ-VAE trained under STE, the forward
+and backward costs of~\eqref{eq:our-estimator} differ by less than a
+constant factor independent of the codebook size $K$, so throughput
+is preserved even for codebooks of $16{,}384$ entries
+(Section~\ref{sec:results}, compute-overhead experiment).
+
+\begin{algorithm}[t]
+\caption{\ours{} forward pass (per latent token).}
+\label{alg:rotquant}
+\begin{algorithmic}[1]
+  \Require encoder output $\ze \in \R^{d}$, codebook $\{\mathbf{e}_k\} \subset \R^{d}$, $\varepsilon > 0$
+  \State $k^* \gets \arg\min_k \|\ze - \mathbf{e}_k\|_2$;\quad $\qvec \gets \mathbf{e}_{k^*}$
+  \State $\hat{\ze} \gets \ze/\max(\|\ze\|,\varepsilon)$;\quad $\hat{\qvec} \gets \qvec/\max(\|\qvec\|,\varepsilon)$
+  \State $\mathbf{u} \gets \hat{\ze} - \hat{\qvec}$;\quad $\vvec \gets \mathbf{u}/\max(\|\mathbf{u}\|,\varepsilon)$
+  \State $s \gets \sg{\|\qvec\|/\|\ze\|}$
+  \State carrier $\gets s\,\big(\ze - 2(\vvec^\top \ze)\,\vvec\big)$ \Comment{backward Jacobian $= s\rmat$ (with $\vvec$ detached)}
+  \State $\zq \gets \text{carrier} + \sg{\qvec - \text{carrier}}$ \Comment{forward $= \qvec$ bit-exact}
+  \State \Return $\zq$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Relationship to prior gradient estimators}
+
+Our estimator can be placed within the taxonomy of prior work as
+follows. \citet{bengio2013ste} and \citet{vandenoord2017vqvae} use
+$\partial \zq / \partial \ze = \mathbf{I}$, a zeroth-order
+approximation. \citet{huh2023straighteningste} introduce an
+alternating-minimisation scheme and an additional rotation-like
+residual to smooth optimisation; their backward Jacobian is no
+longer the identity but is not derived from the closed-form
+rotation~\eqref{eq:identity}. \citet{shah2024decoupledste} decouple
+forward and backward identities but retain an identity-like
+Jacobian. The Gumbel-Softmax~\citep{jang2017gumbel} and
+concrete~\citep{maddison2017concrete} estimators replace the
+$\arg\min$ with a softmax-weighted combination of all codes; their
+forward output is a soft mixture and the backward gradient depends on
+the full code distribution. FSQ~\citep{mentzer2024fsq} eliminates the
+codebook and uses a per-channel STE on a bounded-and-rounded
+projection. NSVQ~\citep{vali2022nsvq} replaces the residual with
+noise. Closest is the concurrent work of~\citet{fifty2024rotation},
+which independently arrives at a rotation-based backward. Our
+treatment differs in deriving the rotation as a closed-form
+Householder operator, in ablating its components against scalar
+rescaling, and in analysing the degenerate
+$\hat{\ze} \approx \hat{\qvec}$ regime where the reflection
+matrix is ill-conditioned.

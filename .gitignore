@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+
+# LaTeX build artefacts (keep main.pdf)
+paper/main.aux
+paper/main.log
+paper/main.out
+paper/main.bbl
+paper/main.blg
+paper/main.toc
+paper/sections/*.aux
+
+# Training by-products too large for git
+*.pt
+*.pth
+*.ckpt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Dataset caches
+code/data/
+experiments/data/
+
+# Large log archives (keep small samples in experiments/logs/)
+*.tar
+*.tar.gz
+*.tgz
+*.zip

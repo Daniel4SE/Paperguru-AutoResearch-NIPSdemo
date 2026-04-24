@@ -1,0 +1,69 @@
+\section{Discussion}
+\label{sec:discussion}
+
+The experiments in Section~\ref{sec:results} support the central
+claim of this paper: that replacing the identity-Jacobian STE with
+the closed-form rotation-plus-scaling Jacobian of
+Equation~\eqref{eq:our-estimator} improves the training of
+vector-quantized autoencoders at no parameter cost and negligible
+throughput cost. Three limitations and one clarification deserve
+explicit mention.
+
+\paragraph{Limitation: the forward operation is still hard.}
+Our method changes only the backward pass; the forward quantizer
+remains a bit-exact nearest-neighbour lookup. This is a deliberate
+design choice because any downstream consumer that freezes the
+tokenizer --- autoregressive transformers, discrete diffusion, masked
+image modelling --- requires integer code indices.  It also means
+our approach is not directly comparable to methods such as FSQ that
+eliminate the codebook altogether, since those target a different
+trade-off between representation simplicity and codebook
+controllability.
+
+\paragraph{Limitation: scale.}
+The experiments reported here are on CIFAR-10 only. The $32 \times
+32$ resolution permits a $12{,}000$-step comparison across four
+baselines within a few GPU-hours and surfaces the codebook-collapse
+regime reliably, but it leaves open whether the relative ordering of
+methods persists at $128{\times}128$ or $256{\times}256$ resolution
+with larger codebooks. Our software stack supports FFHQ and ImageNet
+configurations; scaled experiments are the primary item on our
+immediate follow-up list.
+
+\paragraph{Limitation: downstream metrics.}
+We evaluate tokenizers by their \emph{reconstruction} quality and
+codebook utilisation, not yet by the generative-modelling quality of
+a downstream autoregressive or diffusion model that uses those
+codes. The correlation between tokenizer PSNR / perplexity and
+final generation FID is well-documented~\citep{yu2022vitvqgan,
+yu2023magvit2,yu2024titok}, but is not perfect. A full downstream
+evaluation (training a MaskGIT-style transformer on top of each
+tokenizer, measuring class-conditional FID) is planned as the next
+experiment in our matrix (E5 in our experimental plan).
+
+\paragraph{Clarification: relation to the rotation trick.}
+\citet{fifty2024rotation} independently arrived at the idea that the
+STE discards the rotation between $\ze$ and $\qvec$. Our technical
+contribution relative to that work is the specific closed-form
+Householder formulation of Section~\ref{sec:method}, the isolation
+of the rotation and the rescaling components as independently
+ablatable design choices, and the stop-gradient decomposition that
+yields bit-exact forward output even in the degenerate
+$\hat{\ze} \approx \hat{\qvec}$ regime. These are concrete
+implementation choices, not grand theoretical differences; we
+welcome direct comparison in future work and anticipate that a
+combined estimator drawing on both lines could further improve the
+quality-throughput Pareto.
+
+\paragraph{Broader impact.}
+Because our method is a drop-in replacement for the standard VQ
+quantizer, its main effect is to make existing VQ-based
+architectures slightly better. It does not enable new capabilities
+that were previously infeasible, does not require new data
+collection, and does not affect deployment-time compute.  The
+ethical considerations of generative modelling more broadly ---
+misuse for synthetic media, representational fairness of
+tokenizers trained on web-scraped corpora --- apply to the larger
+systems that would consume our tokenizer, not to the tokenizer
+itself. We encourage downstream users to conduct domain-appropriate
+audits before deployment.

@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you reference this repository, please cite it as follows."
+title: "Paperguru · AutoResearch · NeurIPS Demo — Rotation-Aware Gradient Estimation for VQ-VAEs"
+abstract: >
+  Complete end-to-end artefact trail of an AI-orchestrated research
+  session: research brief, literature search, PyTorch implementation,
+  unit tests, H100 training, and a 15-page NeurIPS-style paper with
+  auto-refreshing result tables.
+authors:
+  - family-names: "Paperguru"
+    given-names: "AutoResearch Agent"
+version: "0.1.0"
+date-released: "2026-04-24"
+license: "MIT"
+repository-code: "https://github.com/paperguru-ai/Paperguru-AutoResearch-NIPSdemo"
+keywords:
+  - vector quantization
+  - VQ-VAE
+  - gradient estimation
+  - straight-through estimator
+  - rotation trick
+  - Householder reflection
+  - NeurIPS
+  - autonomous research

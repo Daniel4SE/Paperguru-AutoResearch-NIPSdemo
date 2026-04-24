@@ -1,0 +1,22 @@
+# Core deep learning (match CUDA 12.4 on the H100 VM)
+torch==2.6.0
+torchvision==0.21.0
+
+# Numerical / image utilities
+numpy>=2.0
+Pillow>=10.0
+scipy>=1.11
+scikit-image>=0.22
+
+# Training and logging
+tensorboard>=2.15
+tqdm>=4.66
+PyYAML>=6.0
+einops>=0.7
+
+# Evaluation metrics
+lpips>=0.1.4
+pytorch-fid>=0.3
+
+# Plotting
+matplotlib>=3.8
