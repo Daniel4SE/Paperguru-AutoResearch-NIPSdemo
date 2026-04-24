@@ -86,5 +86,49 @@
     "trainperplexity": 105.11691284179688,
     "wallsec": 291.84212589263916,
     "stepspersec": 6.513795752362792
+  },
+  "rotent": {
+    "psnr": 24.380659103393555,
+    "ssim": 0.8430396318435669,
+    "usage": 1.0,
+    "perplexity": 1021.2288818359375,
+    "trainpsnr": 24.977924346923828,
+    "trainusage": 1.0,
+    "trainperplexity": 1014.1802368164062,
+    "wallsec": 1899.3237755298615,
+    "stepspersec": 6.213263979548632
+  },
+  "rotlamA": {
+    "psnr": 20.08802604675293,
+    "ssim": 0.6190782189369202,
+    "usage": 1.0,
+    "perplexity": 912.0604248046875,
+    "trainpsnr": 20.06761932373047,
+    "trainusage": 1.0,
+    "trainperplexity": 908.7598266601562,
+    "wallsec": 305.5703635215759,
+    "stepspersec": 6.221153053233754
+  },
+  "rotlamB": {
+    "psnr": 20.228761672973633,
+    "ssim": 0.6277539134025574,
+    "usage": 1.0,
+    "perplexity": 949.2171020507812,
+    "trainpsnr": 20.203433990478516,
+    "trainusage": 1.0,
+    "trainperplexity": 940.8328857421875,
+    "wallsec": 312.1097152233124,
+    "stepspersec": 6.090806877446437
+  },
+  "rotlamC": {
+    "psnr": 22.140932083129883,
+    "ssim": 0.784432053565979,
+    "usage": 1.0,
+    "perplexity": 932.66455078125,
+    "trainpsnr": 22.159202575683594,
+    "trainusage": 1.0,
+    "trainperplexity": 921.03857421875,
+    "wallsec": 292.87703680992126,
+    "stepspersec": 6.490778589902762
   }
 }

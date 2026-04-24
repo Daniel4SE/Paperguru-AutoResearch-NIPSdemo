@@ -1,0 +1,28 @@
+[device] cuda
+[data] train=50000 val=10000
+[model] 5.40M params; quantizer=rotation
+[     0/2000] loss=-6.5372 recon=0.3804 commit=0.0018 psnr=7.25dB usage=1.000 perp=900.6 lr=1.60e-03 13.7s
+[   100/2000] loss=-6.8053 recon=0.1175 commit=0.0014 psnr=16.85dB usage=0.686 perp=491.1 lr=1.59e-03 28.1s
+[   200/2000] loss=-6.8293 recon=0.1001 commit=0.0010 psnr=18.06dB usage=0.771 perp=596.2 lr=1.56e-03 41.1s
+[   300/2000] loss=-6.8394 recon=0.0905 commit=0.0007 psnr=18.88dB usage=0.734 perp=643.3 lr=1.51e-03 54.3s
+[   400/2000] loss=-6.8414 recon=0.0884 commit=0.0007 psnr=19.06dB usage=0.775 perp=681.3 lr=1.45e-03 68.6s
+[   500/2000] loss=-6.8239 recon=0.1006 commit=0.0012 psnr=18.36dB usage=0.966 perp=781.9 lr=1.36e-03 83.6s
+[val 500] recon_l1=0.0903 psnr=19.03dB ssim=0.6548 usage=0.985 perp=742.6 (9.4s)
+[   600/2000] loss=-6.8541 recon=0.0758 commit=0.0007 psnr=20.30dB usage=0.844 perp=776.7 lr=1.27e-03 107.1s
+[   700/2000] loss=-6.8495 recon=0.0797 commit=0.0009 psnr=19.83dB usage=0.883 perp=825.6 lr=1.16e-03 120.9s
+[   800/2000] loss=-6.8627 recon=0.0663 commit=0.0009 psnr=21.39dB usage=0.959 perp=874.5 lr=1.05e-03 134.8s
+[   900/2000] loss=-6.8652 recon=0.0647 commit=0.0009 psnr=21.49dB usage=0.995 perp=915.4 lr=9.24e-04 148.8s
+[  1000/2000] loss=-6.8648 recon=0.0649 commit=0.0009 psnr=21.42dB usage=0.996 perp=920.6 lr=7.99e-04 163.0s
+[val 1000] recon_l1=0.0645 psnr=21.52dB ssim=0.7517 usage=0.999 perp=932.7 (6.2s)
+[  1100/2000] loss=-6.8642 recon=0.0659 commit=0.0009 psnr=21.29dB usage=1.000 perp=923.5 lr=6.74e-04 184.9s
+[  1200/2000] loss=-6.8653 recon=0.0639 commit=0.0008 psnr=21.50dB usage=1.000 perp=934.2 lr=5.52e-04 200.7s
+[  1300/2000] loss=-6.8602 recon=0.0693 commit=0.0009 psnr=20.91dB usage=1.000 perp=934.6 lr=4.36e-04 218.3s
+[  1400/2000] loss=-6.8599 recon=0.0700 commit=0.0010 psnr=20.76dB usage=1.000 perp=937.9 lr=3.30e-04 236.6s
+[  1500/2000] loss=-6.8516 recon=0.0776 commit=0.0011 psnr=19.90dB usage=1.000 perp=939.0 lr=2.34e-04 252.0s
+[val 1500] recon_l1=0.0794 psnr=19.68dB ssim=0.6226 usage=1.000 perp=940.5 (7.1s)
+[  1600/2000] loss=-6.8547 recon=0.0743 commit=0.0012 psnr=20.30dB usage=1.000 perp=935.6 lr=1.53e-04 276.8s
+[  1700/2000] loss=-6.8573 recon=0.0720 commit=0.0011 psnr=20.53dB usage=1.000 perp=945.5 lr=8.76e-05 294.5s
+[  1800/2000] loss=-6.8553 recon=0.0743 commit=0.0012 psnr=20.24dB usage=1.000 perp=939.1 lr=3.97e-05 310.9s
+[  1900/2000] loss=-6.8551 recon=0.0744 commit=0.0014 psnr=20.20dB usage=1.000 perp=940.8 lr=1.06e-05 325.8s
+[val 2000] recon_l1=0.0741 psnr=20.23dB ssim=0.6278 usage=1.000 perp=949.2 (3.9s)
+[done] total steps=2000 elapsed=342.8s

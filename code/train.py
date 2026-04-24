@@ -202,7 +202,8 @@ def train(cfg: Dict[str, Any], device: torch.device, smoke: bool = False) -> Non
                 out = model(x)
                 recon = reconstruction_loss(x, out.x_hat.clamp(0, 1), kind=loss_kind)
                 commit = out.stats.get("commit_loss", torch.tensor(0.0, device=device))
-                loss = recon + commit
+                entropy = out.stats.get("entropy_loss", torch.tensor(0.0, device=device))
+                loss = recon + commit + entropy
                 if lpips_w > 0:
                     lp = compute_lpips(x, out.x_hat.clamp(0, 1))
                     loss = loss + lpips_w * lp

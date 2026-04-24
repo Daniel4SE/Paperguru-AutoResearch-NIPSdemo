@@ -295,6 +295,8 @@ class RotationVQ(BaseQuantizer):
         ema_decay: float = 0.99,
         mode: str = "full",
         eps: float = 1e-6,
+        entropy_weight: float = 0.0,
+        entropy_tau: float = 1.0,
     ):
         super().__init__()
         assert mode in ("full", "no_rotation", "no_rescale", "ste")
@@ -303,6 +305,11 @@ class RotationVQ(BaseQuantizer):
         self.beta = commitment_beta
         self.mode = mode
         self.eps = eps
+        # Entropy regulariser: add -lambda * H(<p>) to the loss so that
+        # the batch-averaged soft assignment distribution stays close to
+        # uniform. Counteracts the R-induced positive-feedback collapse.
+        self.entropy_weight = entropy_weight
+        self.entropy_tau = entropy_tau
         self.codebook = EMACodebook(num_codes, dim, ema_decay=ema_decay)
 
     def _householder_apply(
@@ -395,6 +402,31 @@ class RotationVQ(BaseQuantizer):
 
         commit = F.mse_loss(z_flat, q_flat.detach())
 
+        # Soft-assignment entropy regulariser (Baykal et al. 2023; also
+        # standard in mixture-of-experts load-balancing losses).
+        # p_ik = softmax(-||z_i - e_k||^2 / tau) over codes; the batch-
+        # mean distribution <p>_k should stay close to uniform. We add
+        # -lambda * H(<p>) to the total loss so that high entropy
+        # (uniform use) is encouraged. The embedding table is frozen
+        # during this computation (EMA-updated separately); only z flows
+        # gradient, and therefore pushes the encoder away from
+        # already-crowded codes.
+        if self.entropy_weight > 0:
+            codebook = self.codebook.embedding.detach().clone()
+            # squared L2: (N, K)
+            z2 = (z_flat.detach() ** 2).sum(-1, keepdim=True)
+            e2 = (codebook ** 2).sum(-1)
+            ze = z_flat @ codebook.t()
+            dist2 = z2 - 2 * ze + e2.unsqueeze(0)
+            logits = -dist2 / max(self.entropy_tau, self.eps)
+            # softmax over codes → (N, K)
+            soft = F.softmax(logits, dim=-1)
+            p_bar = soft.mean(dim=0).clamp_min(self.eps)  # (K,)
+            neg_entropy = (p_bar * p_bar.log()).sum()     # ≤ 0
+            entropy_loss = self.entropy_weight * neg_entropy
+        else:
+            entropy_loss = torch.zeros((), device=z_e.device)
+
         if self.training and self.codebook.initialized.item():
             self.codebook.ema_update(z_flat.detach(), idx_flat)
 
@@ -404,6 +436,7 @@ class RotationVQ(BaseQuantizer):
         stats = {
             "commit_loss": self.beta * commit,
             "codebook_loss": torch.zeros((), device=z_e.device),
+            "entropy_loss": entropy_loss,
             "perplexity": _compute_perplexity(indices, self.num_codes),
             "usage": _codebook_usage(indices, self.num_codes),
         }
@@ -445,11 +478,16 @@ class FSQ(BaseQuantizer):
         z_q = z_bounded + (z_bounded.round() - z_bounded).detach()  # STE round
 
         # Encode discrete index for downstream AR models / perplexity.
+        # Map z_q in [-(L-1)/2, (L-1)/2] back to integer levels [0, L-1].
+        # Clamp per-channel to guard against FP drift at the tanh boundaries.
         z_shifted = (z_q + (self._levels_t - 1).view(1, -1, 1, 1) / 2.0).round().long()
+        max_per_ch = (self._levels_t.long() - 1).view(1, -1, 1, 1)
+        z_shifted = z_shifted.clamp(min=0).minimum(max_per_ch)
         strides = torch.ones(self.dim, dtype=torch.long, device=z_q.device)
         for i in range(self.dim - 2, -1, -1):
             strides[i] = strides[i + 1] * int(self.levels[i + 1])
         indices = (z_shifted * strides.view(1, -1, 1, 1)).sum(dim=1)
+        indices = indices.clamp(0, self.num_codes - 1)
 
         stats = {
             "commit_loss": torch.zeros((), device=z_e.device),
@@ -554,6 +592,8 @@ def build_quantizer(cfg: Dict) -> BaseQuantizer:
             commitment_beta=cfg.get("commitment_beta", 0.25),
             ema_decay=cfg.get("ema_decay", 0.99),
             mode=cfg.get("mode", "full"),
+            entropy_weight=cfg.get("entropy_weight", 0.0),
+            entropy_tau=cfg.get("entropy_tau", 1.0),
         )
     if t == "fsq":
         return FSQ(levels=tuple(cfg.get("levels", (8, 8, 8, 5, 5, 5))))

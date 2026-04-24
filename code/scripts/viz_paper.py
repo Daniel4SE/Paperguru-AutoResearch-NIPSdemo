@@ -47,15 +47,18 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 # Distinct colours + labels for each run type
 RUN_STYLE = {
-    "cifar10_vanilla_e1":  {"label": "VQ-VAE (STE)",      "color": "#1f77b4", "ls": "-"},
-    "cifar10_rotation_e1": {"label": "RotationVQ (ours)", "color": "#d62728", "ls": "-"},
-    "cifar10_fsq_e1":      {"label": "FSQ",                "color": "#2ca02c", "ls": "-"},
-    "cifar10_gumbel_e1":   {"label": "Gumbel-Softmax VQ", "color": "#ff7f0e", "ls": "-"},
-    "smoke_rotation":      {"label": "RotationVQ (500 step)", "color": "#9467bd", "ls": "--"},
-    "bench_bs128":         {"label": "bench bs=128",      "color": "#8c564b", "ls": ":"},
-    "bench_bs256":         {"label": "bench bs=256",      "color": "#e377c2", "ls": ":"},
-    "bench_bs512":         {"label": "bench bs=512",      "color": "#7f7f7f", "ls": ":"},
-    "bench_bs1024":        {"label": "bench bs=1024",     "color": "#17becf", "ls": ":"},
+    # Main E1 runs (12000 steps)
+    "cifar10_vanilla_e1":  {"label": "VQ-VAE (STE)",        "color": "#1f77b4", "ls": "-"},
+    "cifar10_rotation_e1": {"label": "RotationVQ (full)",   "color": "#d62728", "ls": "-"},
+    "cifar10_fsq_e1":      {"label": "FSQ",                  "color": "#2ca02c", "ls": "-"},
+    "cifar10_gumbel_e1":   {"label": "Gumbel-Softmax VQ",    "color": "#ff7f0e", "ls": "-"},
+    # E4 ablation modes (2000 steps, dashed)
+    "cifar10_rotation_ste_e4":         {"label": "E4 STE",            "color": "#1f77b4", "ls": "--"},
+    "cifar10_rotation_no_rotation_e4": {"label": "E4 Rescale only",   "color": "#9467bd", "ls": "--"},
+    "cifar10_rotation_no_rescale_e4":  {"label": "E4 Rotation only",  "color": "#d62728", "ls": "--"},
+    "cifar10_rotation_full_e4":        {"label": "E4 Full",           "color": "#8c564b", "ls": "--"},
+    # Legacy smoke / benchmark runs (preserved for history; dotted)
+    "smoke_rotation":      {"label": "smoke",               "color": "#bbbbbb", "ls": ":"},
 }
 
 
@@ -181,9 +184,14 @@ def recon_compare(ckpt_path: Path, label: str, outfile: str, n: int = 8):
 
 def main():
     names = [
-        "cifar10_vanilla_e1", "cifar10_rotation_e1",
-        "cifar10_fsq_e1", "cifar10_gumbel_e1",
-        "smoke_rotation", "bench_bs128", "bench_bs512", "bench_bs1024",
+        "cifar10_vanilla_e1",
+        "cifar10_rotation_e1",
+        "cifar10_fsq_e1",
+        "cifar10_gumbel_e1",
+        "cifar10_rotation_ste_e4",
+        "cifar10_rotation_no_rotation_e4",
+        "cifar10_rotation_no_rescale_e4",
+        "cifar10_rotation_full_e4",
     ]
     runs = load_runs(names)
     print(f"loaded {len(runs)} runs")
@@ -195,6 +203,15 @@ def main():
     plot_single_curve(runs, "train/perplexity",  "codebook perplexity (log)", "fig_perplexity.png", ylog=True)
 
     # Reconstruction case studies from available checkpoints
+    recon_compare(RESULTS / "cifar10_vanilla_e1" / "ckpt_final.pt",
+                  "VQ-VAE (STE), 12k steps CIFAR-10 (val PSNR 25.84)",
+                  "fig_recon_vanilla_e1.png")
+    recon_compare(RESULTS / "cifar10_rotation_e1" / "ckpt_final.pt",
+                  "RotationVQ (full), 12k steps CIFAR-10 (val PSNR 21.39, collapsed)",
+                  "fig_recon_rotation_e1.png")
+    recon_compare(RESULTS / "cifar10_fsq_e1" / "ckpt_final.pt",
+                  "FSQ, 12k steps CIFAR-10 (val PSNR 27.91)",
+                  "fig_recon_fsq_e1.png")
     recon_compare(RESULTS / "smoke_rotation" / "ckpt_final.pt",
                   "RotationVQ, 500 steps CIFAR-10", "fig_recon_smoke_rotation.png")
     for bs in (128, 512):

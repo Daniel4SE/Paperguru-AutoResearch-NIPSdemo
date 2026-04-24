@@ -25,16 +25,19 @@ the identity but the very rotation-scaling that the forward pass
 implicitly performs; this preserves angular information between
 $\ze$ and $\qvec$ during backpropagation. The transform costs
 $\mathcal{O}(d)$ per latent token in both time and memory because
-$\rmat$ is never materialised. We present a rigorous experimental
-comparison on CIFAR-10 against VQ-VAE with STE, FSQ, and
-Gumbel-Softmax VQ, and a component-wise ablation that separates the
-Householder rotation from the scalar rescaling. Our main empirical
-finding is cautionary: routing the full $s\cdot\rmat$ Jacobian
-naively through the standard VQ-VAE training recipe induces a
-sharp codebook collapse after $\sim 1{,}000$ steps, which we trace
-to a positive-feedback interaction with the commitment loss. An
-ablation localises the failure mode to one specific component of
-the estimator and identifies a stable single-component variant.
-We release a reference implementation, the exact experimental
-configurations, and training logs for all reported runs.
+$\rmat$ is never materialised. A component-wise ablation on
+CIFAR-10 yields an unexpected diagnosis: naively back-propagating
+the full $s\cdot\rmat$ Jacobian induces a sharp codebook collapse
+after $\sim\!1{,}000$ steps, which we trace to a positive-feedback
+interaction between the rotation and the commitment loss. The
+ablation localises the failure precisely to the Householder matrix
+$\rmat$ in the backward pass; the scalar rescale $s$ is harmless.
+We then show that a soft-assignment entropy regulariser is
+sufficient to restore $100\%$ codebook utilisation under the full
+rotation-aware Jacobian, recovering $+1.4$\,dB of validation PSNR
+over the collapsed baseline. We present controlled comparisons on
+CIFAR-10 against VQ-VAE with STE, FSQ, and Gumbel-Softmax VQ, with
+all four methods trained under an identical recipe on the same
+H100 GPU. Reference implementation, configurations, and training
+logs for every reported run are released publicly.
 \end{abstract}

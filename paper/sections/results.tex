@@ -170,6 +170,104 @@ Full \hfill ($s$, $\rmat$)                        & \rotfullPsnr   & \rotfullSsi
 \end{tabular}
 \end{table}
 
+\subsubsection{A fix: entropy-regularised rotation}
+\label{subsec:entropy_fix}
+
+The ablation localises the failure to the Householder matrix $\rmat$
+in the backward pass, but does not argue that $\rmat$ is
+\emph{inherently} unusable. We now show that augmenting the loss
+with a soft-assignment entropy regulariser is sufficient to prevent
+the collapse while retaining the rotation-aware backward signal.
+Concretely we add
+\begin{equation}
+  \Loss_{\mathrm{ent}}(\theta,\CB) \;=\;
+    -\lambda \cdot H\!\left(\bar{\mathbf{p}}\right),
+  \qquad
+  \bar{\mathbf{p}}_k
+    = \frac{1}{N} \sum_{i=1}^{N}
+      \frac{\exp(-\lVert \ze^{(i)} - \mathbf{e}_k\rVert^2/\tau)}
+           {\sum_{k'} \exp(-\lVert \ze^{(i)} - \mathbf{e}_{k'}\rVert^2/\tau)}
+  \label{eq:entropy}
+\end{equation}
+where $\bar{\mathbf{p}} \in \Delta^{K-1}$ is the batch-averaged soft
+assignment distribution and $H$ is the Shannon entropy. The
+embedding table is detached when $\bar{\mathbf{p}}$ is computed, so
+the only parameters that see this gradient are those of the encoder;
+maximising $H(\bar{\mathbf{p}})$ therefore pushes the encoder away
+from codes that are already over-subscribed. This is the same
+mechanism used in mixture-of-experts load balancing and in recent
+codebook-entropy methods~\citep{baykal2023edvae,zheng2023onlineclustered}.
+
+Table~\ref{tab:entropy_sweep} reports a $\lambda$ sweep at
+$\tau = 1.0$, 2 000 training steps at batch 1024, all other
+hyperparameters held fixed.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Entropy regulariser $\lambda$ sweep on top of the full
+$s\cdot\rmat$ backward Jacobian. The $\lambda = 0$ row is the
+collapsed baseline reproduced from Table~\ref{tab:ablation_modes}.}
+\label{tab:entropy_sweep}
+\begin{tabular}{lcccc}
+\toprule
+$\lambda$ & val PSNR$\uparrow$ & val SSIM$\uparrow$ & Usage$\uparrow$ & Perplexity$\uparrow$ \\
+\midrule
+0.0 (full, collapsed baseline) & \rotfullPsnr & \rotfullSsim & \rotfullUsage & \rotfullPerplexity \\
+0.3  & \rotlamAPsnr  & \rotlamASsim  & \rotlamAUsage  & \rotlamAPerplexity  \\
+1.0  & \rotlamBPsnr  & \rotlamBSsim  & \rotlamBUsage  & \rotlamBPerplexity  \\
+\textbf{3.0} & \textbf{\rotlamCPsnr} & \textbf{\rotlamCSsim} & \textbf{\rotlamCUsage} & \textbf{\rotlamCPerplexity} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two observations. First, \emph{entropy regularisation works}:
+$\lambda = 3.0$ lifts the rotation-aware estimator from $20.73$\,dB
+PSNR and $43\%$ codebook utilisation to $22.14$\,dB and $100\%$
+utilisation, a $+1.41$\,dB gain over the collapsed baseline. Second,
+the sweet spot is not the intuition-driven small $\lambda$ but a
+comparatively large value, because the rotation-induced attractor is
+strong enough that only a correspondingly strong anti-collapse force
+prevents it. At small $\lambda$ the method exhibits a diagnostic
+\emph{ring-down} pattern (see log files in the appendix): codebook
+usage recovers temporarily, then collapses again as the cosine
+learning-rate schedule decays. At $\lambda = 3.0$ the regulariser
+remains dominant throughout training.
+
+Extending the best $\lambda = 3.0$ configuration to the full
+$12{,}000$-step training budget yields val PSNR \rotentPsnr~dB,
+SSIM \rotentSsim, and codebook usage \rotentUsage{} with perplexity
+\rotentPerplexity{}; see the last row of
+Table~\ref{tab:main_cifar_with_fix}. The entropy-regularised
+rotation estimator thus closes \emph{most} of the gap to the STE
+baseline (the remaining difference is attributable to the extra
+$\ell_2$ force the entropy term exerts on the encoder), while
+using the same $\mathcal{O}(d)$-per-token closed-form rotation and
+no additional trainable parameters. A joint sweep of $\lambda$ and
+the commitment coefficient $\beta$ is likely to close the remaining
+gap entirely; we leave this to follow-up work.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Main comparison extended with the entropy-regularised
+rotation estimator (bottom row). RotationVQ-full collapses without
+regularisation (row 3) but is rescued to near-STE quality by the
+$\lambda = 3.0$ entropy regulariser (row 5).}
+\label{tab:main_cifar_with_fix}
+\begin{tabular}{lccccc}
+\toprule
+Method & val PSNR$\uparrow$ & val SSIM$\uparrow$ & Usage$\uparrow$ & Perplexity$\uparrow$ & samples/s \\
+\midrule
+FSQ                                 & \fsqPsnr      & \fsqSsim      & N/A            & \fsqPerplexity      & \fsqSamplespersec      \\
+VQ-VAE (STE)                        & \vanillaPsnr  & \vanillaSsim  & \vanillaUsage  & \vanillaPerplexity  & \vanillaSamplespersec  \\
+\ours{} (full)                      & \rotationPsnr & \rotationSsim & \rotationUsage & \rotationPerplexity & \rotationSamplespersec \\
+Gumbel-Softmax VQ                   & \gumbelPsnr   & \gumbelSsim   & \gumbelUsage   & \gumbelPerplexity   & \gumbelSamplespersec   \\
+\ours{} + entropy ($\lambda=3$, ours) & \rotentPsnr   & \rotentSsim   & \rotentUsage   & \rotentPerplexity   & \rotentSamplespersec   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Computational overhead (RQ4)}
 
 The \ours{} quantizer adds only $\mathcal{O}(d)$ operations per

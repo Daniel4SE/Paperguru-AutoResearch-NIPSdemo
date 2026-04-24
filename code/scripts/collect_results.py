@@ -14,10 +14,20 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 RESULTS = Path(os.path.expanduser("~/vq-rotation/results"))
 
 RUNS = {
-    "vanilla": "cifar10_vanilla_e1",
-    "rotation": "cifar10_rotation_e1",
-    "fsq": "cifar10_fsq_e1",
-    "gumbel": "cifar10_gumbel_e1",
+    "vanilla":   "cifar10_vanilla_e1",
+    "rotation":  "cifar10_rotation_e1",
+    "fsq":       "cifar10_fsq_e1",
+    "gumbel":    "cifar10_gumbel_e1",
+    # E4 ablation modes (2000-step runs)
+    "rotste":    "cifar10_rotation_ste_e4",
+    "rotnorot":  "cifar10_rotation_no_rotation_e4",
+    "rotnoresc": "cifar10_rotation_no_rescale_e4",
+    "rotfull":   "cifar10_rotation_full_e4",
+    # Entropy-regularised fix (lambda sweep + full 12k run)
+    "rotent":    "cifar10_rotation_entropy_e1",
+    "rotlamA":   "cifar10_rotation_fix_lam0.3_e4",
+    "rotlamB":   "cifar10_rotation_fix_lam1.0_e4",
+    "rotlamC":   "cifar10_rotation_fix_lam3.0_e4",
 }
 
 
