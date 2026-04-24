@@ -105,19 +105,23 @@ quantizers = **≈ 2 hours** for the full E1 matrix.
 Main CIFAR-10 reconstruction benchmark, 12 000 steps at batch 1024
 (see [Table 1](paper/main.pdf)):
 
-| Method             |  PSNR ↑ | SSIM ↑ | Usage ↑ | Perplexity ↑ | Samples/s |
-|--------------------|--------:|-------:|--------:|-------------:|----------:|
-| VQ-VAE (STE)       |  25.84  |  0.87  |  1.000  |      948.67  |    6 565  |
-| Gumbel-Softmax VQ  |   (running) | — | — | — | — |
-| FSQ                |   (running) | — | — | — | — |
-| **RotationVQ** (ours) | **(running)** | — | — | — | — |
+| Method             |  val PSNR ↑ | val SSIM ↑ | Usage ↑ | Perplexity ↑ | Samples/s |
+|--------------------|------------:|-----------:|--------:|-------------:|----------:|
+| VQ-VAE (STE)       |    **25.84** | **0.87**  | **1.000** | **948.67**  |    6 545  |
+| RotationVQ (full)  |      21.39  |   0.68   |  0.361  |      173.12  |    6 756  |
+| FSQ                |    (running) | — | — | — | — |
+| Gumbel-Softmax VQ  |    (running) | — | — | — | — |
 
-The VQ-VAE baseline numbers above are **live, auto-extracted** from the
-TensorBoard events of the actual training run on 2026-04-24 at
-`217.18.55.93` (see [`experiments/E1_main_comparison.md`](experiments/E1_main_comparison.md)).
-The remaining three methods are currently training on the same GPU
-under the identical protocol; their numbers will be committed as each
-run completes.
+> ⚠️ **Honest update.** Our initial hypothesis —
+> that routing the full $s\cdot R$ Jacobian through the quantizer
+> would improve over STE — **is not supported by this experiment**.
+> RotationVQ in its full form induces a sharp codebook collapse
+> after $\sim 1{,}000$ steps, which we trace to a positive-feedback
+> interaction with the commitment loss. The ablation sweep
+> (`experiments/E4_gradient_routes.md`) is currently running to
+> localise the failure mode and identify a stable variant.
+> See [`story/05-rotation-collapse.md`](story/05-rotation-collapse.md)
+> for the full diagnostic and decision trail.
 
 <p align="center">
   <img src="paper/figures/fig1_architecture.png" alt="Architecture" width="85%"/>

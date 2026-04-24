@@ -1,0 +1,18 @@
+[device] cuda
+[data] train=50000 val=10000
+[model] 5.40M params; quantizer=fsq
+[     0/12000] loss=0.3753 recon=0.3753 commit=0.0000 psnr=7.32dB usage=0.006 perp=15.4 lr=1.60e-03 6.4s
+[   200/12000] loss=0.0940 recon=0.0940 commit=0.0000 psnr=18.49dB usage=0.050 perp=583.3 lr=1.60e-03 49.6s
+[   400/12000] loss=0.0670 recon=0.0670 commit=0.0000 psnr=21.31dB usage=0.064 perp=1182.0 lr=1.60e-03 91.3s
+[   600/12000] loss=0.0664 recon=0.0664 commit=0.0000 psnr=21.51dB usage=0.074 perp=1502.4 lr=1.59e-03 130.9s
+[   800/12000] loss=0.0608 recon=0.0608 commit=0.0000 psnr=22.07dB usage=0.074 perp=1348.0 lr=1.58e-03 165.5s
+[  1000/12000] loss=0.0573 recon=0.0573 commit=0.0000 psnr=22.66dB usage=0.080 perp=1644.5 lr=1.57e-03 201.2s
+[val 1000] recon_l1=0.0552 psnr=23.11dB ssim=0.8293 usage=0.109 perp=1742.9 (9.2s)
+[  1200/12000] loss=0.0464 recon=0.0464 commit=0.0000 psnr=24.43dB usage=0.078 perp=1674.5 lr=1.56e-03 247.7s
+[  1400/12000] loss=0.0445 recon=0.0445 commit=0.0000 psnr=24.78dB usage=0.084 perp=2026.2 lr=1.55e-03 281.8s
+[  1600/12000] loss=0.0416 recon=0.0416 commit=0.0000 psnr=25.30dB usage=0.082 perp=1909.2 lr=1.53e-03 318.3s
+[  1800/12000] loss=0.0410 recon=0.0410 commit=0.0000 psnr=25.42dB usage=0.083 perp=1972.7 lr=1.51e-03 356.0s
+[  2000/12000] loss=0.0375 recon=0.0375 commit=0.0000 psnr=26.11dB usage=0.089 perp=2324.3 lr=1.49e-03 390.7s
+[val 2000] recon_l1=0.0374 psnr=26.13dB ssim=0.8913 usage=0.117 perp=2464.0 (4.4s)
+[  2200/12000] loss=0.0386 recon=0.0386 commit=0.0000 psnr=25.90dB usage=0.092 perp=2491.9 lr=1.47e-03 431.1s
+[  2400/12000] loss=0.0374 recon=0.0374 commit=0.0000 psnr=26.22dB usage=0.094 perp=2617.8 lr=1.45e-03 465.9s

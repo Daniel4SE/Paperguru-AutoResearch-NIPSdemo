@@ -1,13 +1,31 @@
 \section{Discussion}
 \label{sec:discussion}
 
-The experiments in Section~\ref{sec:results} support the central
-claim of this paper: that replacing the identity-Jacobian STE with
-the closed-form rotation-plus-scaling Jacobian of
-Equation~\eqref{eq:our-estimator} improves the training of
-vector-quantized autoencoders at no parameter cost and negligible
-throughput cost. Three limitations and one clarification deserve
-explicit mention.
+The experiments in Section~\ref{sec:results} deliver a result that
+we did not expect at the outset. The closed-form rotation-plus-
+scaling Jacobian of Equation~\eqref{eq:our-estimator}, despite being
+exactly the backward signal that the forward quantizer performs, is
+\emph{harmful} as a drop-in replacement for the STE at the
+configuration we tested: it induces a sharp codebook collapse after
+roughly $1{,}000$ optimisation steps and never recovers. The
+decomposed ablation, Table~\ref{tab:ablation_modes}, localises the
+damage to the component that interacts with the commitment loss. We
+therefore make two separate claims that did not exist when we began.
+First, the identity $\qvec = s\cdot\rmat\ze$ is a correct and
+exploitable geometric fact; the Householder operator is an efficient
+$\mathcal{O}(d)$ implementation of it. Second, the naive application
+of this identity as a backward Jacobian creates a positive-feedback
+loop that the standard VQ-VAE training recipe is not equipped to
+absorb. A useful rotation-aware estimator therefore has to combine
+the closed-form geometry with an explicit mechanism for preventing
+the feedback loop --- for example, a codebook-entropy regulariser, a
+temperature that anneals the rotation toward identity as training
+progresses, or the use of only the rotation \emph{without} the
+scalar rescaling. We leave a full characterisation of which
+combination is stable to follow-up work and report the ablation
+results in Section~\ref{sec:results}.
+
+We now discuss limitations and one clarification.
 
 \paragraph{Limitation: the forward operation is still hard.}
 Our method changes only the backward pass; the forward quantizer

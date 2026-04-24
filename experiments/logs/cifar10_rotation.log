@@ -44,3 +44,33 @@
 [  6800/12000] loss=0.0516 recon=0.0516 commit=0.0000 psnr=22.94dB usage=0.360 perp=163.3 lr=6.34e-04 1041.2s
 [  7000/12000] loss=0.0507 recon=0.0507 commit=0.0000 psnr=23.11dB usage=0.360 perp=161.3 lr=5.93e-04 1069.4s
 [val 7000] recon_l1=0.0603 psnr=21.77dB ssim=0.6958 usage=0.361 perp=169.8 (5.1s)
+[  7200/12000] loss=0.0498 recon=0.0498 commit=0.0000 psnr=23.30dB usage=0.362 perp=170.6 lr=5.53e-04 1101.8s
+[  7400/12000] loss=0.0495 recon=0.0495 commit=0.0000 psnr=23.31dB usage=0.354 perp=164.7 lr=5.14e-04 1129.8s
+[  7600/12000] loss=0.0488 recon=0.0488 commit=0.0000 psnr=23.40dB usage=0.354 perp=178.2 lr=4.75e-04 1158.0s
+[  7800/12000] loss=0.0496 recon=0.0496 commit=0.0000 psnr=23.22dB usage=0.364 perp=169.3 lr=4.37e-04 1185.3s
+[  8000/12000] loss=0.0495 recon=0.0495 commit=0.0000 psnr=23.32dB usage=0.371 perp=181.9 lr=4.01e-04 1215.9s
+[val 8000] recon_l1=0.0614 psnr=21.64dB ssim=0.6880 usage=0.357 perp=169.5 (7.0s)
+[  8200/12000] loss=0.0482 recon=0.0482 commit=0.0000 psnr=23.51dB usage=0.361 perp=170.0 lr=3.65e-04 1252.1s
+[  8400/12000] loss=0.0482 recon=0.0482 commit=0.0000 psnr=23.46dB usage=0.362 perp=169.5 lr=3.30e-04 1280.9s
+[  8600/12000] loss=0.0470 recon=0.0470 commit=0.0000 psnr=23.69dB usage=0.363 perp=171.7 lr=2.97e-04 1310.1s
+[  8800/12000] loss=0.0477 recon=0.0477 commit=0.0000 psnr=23.56dB usage=0.374 perp=180.2 lr=2.65e-04 1337.2s
+[  9000/12000] loss=0.0466 recon=0.0466 commit=0.0000 psnr=23.77dB usage=0.360 perp=177.6 lr=2.35e-04 1364.4s
+[val 9000] recon_l1=0.0618 psnr=21.57dB ssim=0.6864 usage=0.370 perp=173.0 (5.8s)
+[  9200/12000] loss=0.0478 recon=0.0478 commit=0.0000 psnr=23.55dB usage=0.371 perp=188.1 lr=2.06e-04 1404.2s
+[  9400/12000] loss=0.0469 recon=0.0469 commit=0.0000 psnr=23.66dB usage=0.366 perp=184.1 lr=1.79e-04 1432.1s
+[  9600/12000] loss=0.0471 recon=0.0471 commit=0.0000 psnr=23.65dB usage=0.363 perp=180.0 lr=1.54e-04 1459.6s
+[  9800/12000] loss=0.0464 recon=0.0464 commit=0.0000 psnr=23.74dB usage=0.362 perp=181.1 lr=1.30e-04 1486.6s
+[ 10000/12000] loss=0.0473 recon=0.0473 commit=0.0000 psnr=23.60dB usage=0.364 perp=176.2 lr=1.08e-04 1513.6s
+[val 10000] recon_l1=0.0627 psnr=21.45dB ssim=0.6823 usage=0.368 perp=174.4 (5.5s)
+[ 10200/12000] loss=0.0469 recon=0.0469 commit=0.0000 psnr=23.68dB usage=0.366 perp=179.4 lr=8.80e-05 1544.9s
+[ 10400/12000] loss=0.0467 recon=0.0467 commit=0.0000 psnr=23.72dB usage=0.364 perp=171.7 lr=7.00e-05 1571.1s
+[ 10600/12000] loss=0.0465 recon=0.0465 commit=0.0000 psnr=23.76dB usage=0.363 perp=184.8 lr=5.40e-05 1603.3s
+[ 10800/12000] loss=0.0466 recon=0.0466 commit=0.0000 psnr=23.69dB usage=0.349 perp=172.7 lr=4.01e-05 1639.6s
+[ 11000/12000] loss=0.0466 recon=0.0466 commit=0.0000 psnr=23.70dB usage=0.359 perp=173.8 lr=2.82e-05 1670.6s
+[val 11000] recon_l1=0.0630 psnr=21.41dB ssim=0.6803 usage=0.354 perp=178.1 (6.1s)
+[ 11200/12000] loss=0.0463 recon=0.0463 commit=0.0000 psnr=23.78dB usage=0.362 perp=179.1 lr=1.84e-05 1708.1s
+[ 11400/12000] loss=0.0454 recon=0.0454 commit=0.0000 psnr=23.96dB usage=0.371 perp=183.6 lr=1.08e-05 1739.9s
+[ 11600/12000] loss=0.0457 recon=0.0457 commit=0.0000 psnr=23.87dB usage=0.360 perp=174.9 lr=5.36e-06 1772.5s
+[ 11800/12000] loss=0.0461 recon=0.0461 commit=0.0000 psnr=23.78dB usage=0.364 perp=169.9 lr=2.08e-06 1799.6s
+[val 12000] recon_l1=0.0631 psnr=21.39dB ssim=0.6796 usage=0.361 perp=173.1 (3.9s)
+[done] total steps=12000 elapsed=1833.0s

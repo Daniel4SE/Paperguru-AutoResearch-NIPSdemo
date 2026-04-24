@@ -11,12 +11,22 @@
     "stepspersec": 6.392489519490338
   },
   "rotation": {
-    "trainpsnr": 20.214073181152344,
-    "trainusage": 0.8583984375,
-    "trainperplexity": 654.1233520507812,
-    "wallsec": 79.94455981254578,
-    "stepspersec": 7.517709790500147
+    "psnr": 21.394426345825195,
+    "ssim": 0.6796191930770874,
+    "usage": 0.361328125,
+    "perplexity": 173.12042236328125,
+    "trainpsnr": 23.78435516357422,
+    "trainusage": 0.3642578125,
+    "trainperplexity": 169.92762756347656,
+    "wallsec": 1788.5829274654388,
+    "stepspersec": 6.597960775977514
   },
-  "fsq": {},
+  "fsq": {
+    "trainpsnr": 22.072587966918945,
+    "trainusage": 0.07443749904632568,
+    "trainperplexity": 1348.03369140625,
+    "wallsec": 159.10957074165344,
+    "stepspersec": 5.034266614298051
+  },
   "gumbel": {}
 }

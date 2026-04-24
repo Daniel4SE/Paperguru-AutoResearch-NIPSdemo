@@ -18,10 +18,19 @@ Figure~\ref{fig:training_dynamics}.
 
 Table~\ref{tab:main_cifar} compares reconstruction fidelity and
 codebook utilisation across the four quantizers under an identical
-training recipe. \ours{} improves over VQ-STE in reconstruction PSNR
-and matches or exceeds the codebook-free FSQ baseline, while
-preserving the discrete-token interface that downstream tokenizer
-consumers require.
+training recipe. Contrary to our initial hypothesis, the \ours{}
+estimator in its full form \emph{underperforms} the STE baseline on
+CIFAR-10 at $K = 1024$, with a $\sim 4$\,dB drop in validation PSNR
+and a collapse of codebook usage from $100\%$ to roughly $36\%$. A
+step-by-step diagnostic (\S\ref{subsec:rotation_collapse}) shows the
+collapse is sharp and reproducible: the rotation-aware gradient
+produces a positive feedback loop that pulls each encoder output
+toward its currently-selected codebook vector faster than the
+dead-code reinitialisation loop can rebalance the codebook. The
+ablations in Table~\ref{tab:ablation_modes} isolate which part of
+the $s\cdot R$ Jacobian is responsible for this behaviour and
+identify a single-component variant that retains the theoretical
+motivation without the empirical failure mode.
 
 \begin{table}[t]
 \centering
@@ -41,19 +50,31 @@ Method & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & Usage$\uparrow$ &
 VQ-VAE (STE) \citep{vandenoord2017vqvae}  & \vanillaPsnr  & \vanillaSsim  & \vanillaLpips  & \vanillaUsage  & \vanillaPerplexity  & \vanillaSamplespersec  \\
 Gumbel-Softmax VQ \citep{jang2017gumbel}  & \gumbelPsnr   & \gumbelSsim   & \gumbelLpips   & \gumbelUsage   & \gumbelPerplexity   & \gumbelSamplespersec   \\
 FSQ \citep{mentzer2024fsq}                & \fsqPsnr      & \fsqSsim      & \fsqLpips      & N/A            & \fsqPerplexity      & \fsqSamplespersec      \\
-\ours{} (full)                            & \textbf{\rotationPsnr} & \textbf{\rotationSsim} & \textbf{\rotationLpips} & \textbf{\rotationUsage} & \textbf{\rotationPerplexity} & \rotationSamplespersec \\
+\ours{} (full)                            & \rotationPsnr & \rotationSsim & \rotationLpips & \rotationUsage & \rotationPerplexity & \rotationSamplespersec \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{Observations from the training logs.}
-At the midpoint of training ($6{,}000$ steps) the VQ-STE run reaches a
-train PSNR of roughly $24.5$~dB with codebook usage approaching
-$100\%$ and perplexity near $870$ out of $1024$; \ours{} tracks a
-comparable PSNR trajectory while exhibiting slightly higher
-perplexity, consistent with the hypothesis that the rotation-aware
-gradient spreads load more evenly across codes. Final numbers will
-be reported from the $12{,}000$-step checkpoints.
+\subsubsection{Diagnostic: when does the collapse happen?}
+\label{subsec:rotation_collapse}
+
+The training curves of VQ-STE and \ours{} are indistinguishable for
+the first $1{,}000$ steps, after which \ours{} diverges abruptly:
+between step $1{,}000$ and step $2{,}000$ its codebook usage drops
+from $0.94$ to $0.22$, its perplexity collapses from $632$ to $94$,
+and its reconstruction loss stalls while VQ-STE continues to improve.
+The commitment loss, which measures $\lVert\ze - \sg{\qvec}\rVert^2$,
+drops to \emph{numerically zero} on \ours{} while VQ-STE keeps it at
+$\sim 10^{-3}$. Concretely, the encoder has learned to output
+vectors that coincide with a handful of codebook vectors, so there
+is nothing for the commitment loss to push against. Under the
+$s\cdot R$ Jacobian every mini-batch reinforces this behaviour: the
+gradient at any $\ze$ is a scaled rotation \emph{toward} its assigned
+$\qvec$, which is constructive rather than disambiguating when
+several training examples share the same $\qvec$. Under the plain
+STE, by contrast, the gradient reaching the encoder is exactly the
+decoder-side gradient at $\qvec$; it does not carry the "move toward
+$\qvec$" direction as a bias.
 
 \subsection{Codebook utilisation dynamics (RQ2)}
 

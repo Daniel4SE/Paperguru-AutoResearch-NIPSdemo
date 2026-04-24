@@ -1,0 +1,61 @@
+data:
+  image_size: 32
+  name: cifar10
+  num_workers: 0
+  root: ~/vq-rotation/data
+logging:
+  out_dir: ~/vq-rotation/results/cifar10_fsq_e1
+model:
+  decoder:
+    attn_resolutions: []
+    base_ch: 64
+    ch_mults:
+    - 1
+    - 2
+    - 2
+    dropout: 0.0
+    num_res_blocks: 2
+    out_channels: 3
+    output_resolution: 32
+    z_channels: 128
+  embed_dim: 6
+  encoder:
+    attn_resolutions: []
+    base_ch: 64
+    ch_mults:
+    - 1
+    - 2
+    - 2
+    dropout: 0.0
+    in_channels: 3
+    input_resolution: 32
+    num_res_blocks: 2
+    z_channels: 128
+  quantizer:
+    levels:
+    - 8
+    - 8
+    - 8
+    - 5
+    - 5
+    - 5
+    type: fsq
+seed: 0
+train:
+  amp: false
+  batch_size: 1024
+  betas:
+  - 0.9
+  - 0.99
+  grad_clip: 1.0
+  log_every: 200
+  lpips_weight: 0.0
+  lr: 0.0016
+  lr_min: 1.0e-06
+  max_steps: 12000
+  max_val_batches: 20
+  recon_loss: l1
+  save_every: 6000
+  val_every: 1000
+  val_lpips: false
+  weight_decay: 0.0
