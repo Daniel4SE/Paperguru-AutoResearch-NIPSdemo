@@ -7,7 +7,7 @@
 # (optionally) pushes to Daniel4SE/Paperguru-AutoResearch-NIPSdemo.
 
 set -e
-SERVER=ubuntu@217.18.55.93
+SERVER=${SERVER:-ubuntu@217.18.55.141}
 REMOTE=/home/ubuntu/vq-rotation
 REPO=$(cd "$(dirname "$0")" && pwd)
 

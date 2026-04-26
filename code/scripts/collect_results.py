@@ -14,20 +14,30 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 RESULTS = Path(os.path.expanduser("~/vq-rotation/results"))
 
 RUNS = {
+    # === E1 main comparison (12k steps) ===
     "vanilla":   "cifar10_vanilla_e1",
     "rotation":  "cifar10_rotation_e1",
     "fsq":       "cifar10_fsq_e1",
     "gumbel":    "cifar10_gumbel_e1",
-    # E4 ablation modes (2000-step runs)
+    # === E4 ablation modes (2k steps) ===
     "rotste":    "cifar10_rotation_ste_e4",
     "rotnorot":  "cifar10_rotation_no_rotation_e4",
     "rotnoresc": "cifar10_rotation_no_rescale_e4",
     "rotfull":   "cifar10_rotation_full_e4",
-    # Entropy-regularised fix (lambda sweep + full 12k run)
+    # === Entropy regulariser (lambda sweep + full 12k run) ===
     "rotent":    "cifar10_rotation_entropy_e1",
     "rotlamA":   "cifar10_rotation_fix_lam0.3_e4",
     "rotlamB":   "cifar10_rotation_fix_lam1.0_e4",
     "rotlamC":   "cifar10_rotation_fix_lam3.0_e4",
+    # === E2 codebook-size sweep (12k steps each) ===
+    "vanK1024":   "cifar10_vanilla_K1024_e2",
+    "vanK4096":   "cifar10_vanilla_K4096_e2",
+    "vanK8192":   "cifar10_vanilla_K8192_e2",
+    "vanK16384":  "cifar10_vanilla_K16384_e2",
+    "rotentK1024":  "cifar10_rotent_K1024_e2",
+    "rotentK4096":  "cifar10_rotent_K4096_e2",
+    "rotentK8192":  "cifar10_rotent_K8192_e2",
+    "rotentK16384": "cifar10_rotent_K16384_e2",
 }
 
 
